@@ -1,0 +1,81 @@
+import enum
+
+
+class UserRole(str, enum.Enum):
+    CUSTOMER = "customer"
+    AGENT = "agent"
+    REVIEWER = "reviewer"
+    MANAGER = "manager"
+    ADMIN = "admin"
+
+
+class LoyaltyTier(str, enum.Enum):
+    SILVER = "silver"
+    GOLD = "gold"
+    PLATINUM = "platinum"
+
+
+class ComplaintChannel(str, enum.Enum):
+    WEB_FORM = "web_form"
+    CHAT = "chat"
+    EMAIL = "email"
+    DOCUMENT = "document"
+
+
+class ComplaintStatus(str, enum.Enum):
+    SUBMITTED = "submitted"
+    VALIDATING = "validating"
+    PROCESSING = "processing"
+    UNDER_REVIEW = "under_review"
+    ASSIGNED = "assigned"
+    IN_PROGRESS = "in_progress"
+    AWAITING_CUSTOMER = "awaiting_customer"
+    RESOLVED = "resolved"
+    CLOSED = "closed"
+    REOPENED = "reopened"
+    ESCALATED = "escalated"
+
+
+class Priority(str, enum.Enum):
+    P0 = "P0"
+    P1 = "P1"
+    P2 = "P2"
+    P3 = "P3"
+
+
+class Urgency(str, enum.Enum):
+    CRITICAL = "critical"
+    HIGH = "high"
+    MEDIUM = "medium"
+    LOW = "low"
+
+
+class PipelineType(str, enum.Enum):
+    GENAI = "genai"
+    GROUND_TRUTH = "ground_truth"
+
+
+class ConflictSeverity(str, enum.Enum):
+    NONE = "none"
+    MINOR = "minor"
+    MAJOR = "major"
+    CRITICAL = "critical"
+
+
+class HistoryAction(str, enum.Enum):
+    CREATED = "created"
+    STATUS_CHANGED = "status_changed"
+    PRIORITY_CHANGED = "priority_changed"
+    ASSIGNED = "assigned"
+    ESCALATED = "escalated"
+    NOTE_ADDED = "note_added"
+    RESPONSE_SENT = "response_sent"
+    CONFLICT_RESOLVED = "conflict_resolved"
+    REOPENED = "reopened"
+    CLOSED = "closed"
+
+
+class MessageSender(str, enum.Enum):
+    CUSTOMER = "customer"
+    AGENT = "agent"
+    SYSTEM = "system"
