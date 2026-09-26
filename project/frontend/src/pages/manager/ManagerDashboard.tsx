@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { AppShell } from '../../components/layout/AppShell'
 import { PriorityBadge, StatusBadge } from '../../components/ui/Badge'
 import { StatCard } from '../../components/ui/Card'
-import { Select } from '../../components/ui/Input'
+import { Input, Select } from '../../components/ui/Input'
 import { Pagination } from '../../components/ui/Pagination'
 import { Table } from '../../components/ui/Table'
 import { managerApi } from '../../services/manager'
@@ -20,7 +20,17 @@ export function ManagerDashboard() {
   const [page, setPage] = useState(1)
   const [statusFilter, setStatusFilter] = useState<ComplaintStatus | ''>('')
   const [priorityFilter, setPriorityFilter] = useState<Priority | ''>('')
+  const [searchInput, setSearchInput] = useState('')
+  const [search, setSearch] = useState('')
   const [analytics, setAnalytics] = useState<ManagerAnalytics | null>(null)
+
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      setPage(1)
+      setSearch(searchInput.trim())
+    }, 400)
+    return () => clearTimeout(timeout)
+  }, [searchInput])
 
   useEffect(() => {
     const load = async () => {
@@ -30,6 +40,7 @@ export function ManagerDashboard() {
           page_size: PAGE_SIZE,
           status: statusFilter || undefined,
           priority: priorityFilter || undefined,
+          search: search || undefined,
         }),
         managerApi.analytics(),
       ])
@@ -40,7 +51,7 @@ export function ManagerDashboard() {
     load()
     const interval = setInterval(load, 15_000)
     return () => clearInterval(interval)
-  }, [page, statusFilter, priorityFilter])
+  }, [page, statusFilter, priorityFilter, search])
 
   return (
     <AppShell title="Manager Dashboard">
@@ -97,6 +108,12 @@ export function ManagerDashboard() {
       )}
 
       <div className="mb-4 flex gap-3">
+        <Input
+          value={searchInput}
+          onChange={(e) => setSearchInput(e.target.value)}
+          placeholder="Search title, description, or ID…"
+          className="w-64"
+        />
         <Select
           value={statusFilter}
           onChange={(e) => {

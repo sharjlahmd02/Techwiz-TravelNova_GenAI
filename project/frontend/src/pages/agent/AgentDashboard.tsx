@@ -1,12 +1,13 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { AppShell } from '../../components/layout/AppShell'
 import { PriorityBadge, StatusBadge } from '../../components/ui/Badge'
 import { SLAIndicator } from '../../components/ui/SLAIndicator'
-import { Select } from '../../components/ui/Input'
+import { Input, Select } from '../../components/ui/Input'
 import { StatCard } from '../../components/ui/Card'
 import { Pagination } from '../../components/ui/Pagination'
 import { Table } from '../../components/ui/Table'
+import { useToast } from '../../components/ui/Toast'
 import { agentApi } from '../../services/agent'
 import type { StaffComplaintSummary } from '../../types/staff'
 import type { ComplaintStatus, Priority } from '../../types/complaint'
@@ -15,12 +16,24 @@ const PAGE_SIZE = 20
 
 export function AgentDashboard() {
   const navigate = useNavigate()
+  const { show } = useToast()
   const [complaints, setComplaints] = useState<StaffComplaintSummary[]>([])
   const [total, setTotal] = useState(0)
   const [page, setPage] = useState(1)
   const [statusFilter, setStatusFilter] = useState<ComplaintStatus | ''>('')
   const [priorityFilter, setPriorityFilter] = useState<Priority | ''>('')
+  const [searchInput, setSearchInput] = useState('')
+  const [search, setSearch] = useState('')
   const [metrics, setMetrics] = useState<{ resolved_count: number; open_count: number } | null>(null)
+  const prevOpenCount = useRef<number | null>(null)
+
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      setPage(1)
+      setSearch(searchInput.trim())
+    }, 400)
+    return () => clearTimeout(timeout)
+  }, [searchInput])
 
   const load = async () => {
     const { data } = await agentApi.list({
@@ -28,10 +41,15 @@ export function AgentDashboard() {
       page_size: PAGE_SIZE,
       status: statusFilter || undefined,
       priority: priorityFilter || undefined,
+      search: search || undefined,
     })
     setComplaints(data.items)
     setTotal(data.total)
     const { data: m } = await agentApi.metrics()
+    if (prevOpenCount.current !== null && m.open_count > prevOpenCount.current) {
+      show(`${m.open_count - prevOpenCount.current} new complaint(s) assigned to your department`, 'info')
+    }
+    prevOpenCount.current = m.open_count
     setMetrics(m)
   }
 
@@ -40,7 +58,7 @@ export function AgentDashboard() {
     const interval = setInterval(load, 10_000)
     return () => clearInterval(interval)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, statusFilter, priorityFilter])
+  }, [page, statusFilter, priorityFilter, search])
 
   return (
     <AppShell title="Complaints">
@@ -50,6 +68,12 @@ export function AgentDashboard() {
       </div>
 
       <div className="mb-4 flex gap-3">
+        <Input
+          value={searchInput}
+          onChange={(e) => setSearchInput(e.target.value)}
+          placeholder="Search title, description, or ID…"
+          className="w-64"
+        />
         <Select
           value={statusFilter}
           onChange={(e) => {

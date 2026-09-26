@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime, timezone
 
 from fastapi import HTTPException, status
-from sqlalchemy import func, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.complaint import Complaint
@@ -26,12 +26,18 @@ class AgentService:
         page_size: int,
         status_filter: ComplaintStatus | None = None,
         priority_filter: Priority | None = None,
+        search: str | None = None,
     ) -> tuple[list[Complaint], int]:
         conditions = [Complaint.department_id == agent.department_id]
         if status_filter:
             conditions.append(Complaint.status == status_filter)
         if priority_filter:
             conditions.append(Complaint.priority == priority_filter)
+        if search:
+            like = f"%{search}%"
+            conditions.append(
+                or_(Complaint.title.ilike(like), Complaint.description.ilike(like), Complaint.complaint_id.ilike(like))
+            )
 
         base = select(Complaint).where(*conditions).order_by(Complaint.created_at.desc())
         total = len((await self.db.scalars(base)).all())
@@ -54,6 +60,17 @@ class AgentService:
         complaint.status = new_status
         if complaint.assigned_agent_id is None:
             complaint.assigned_agent_id = agent.id
+
+        # First time an agent acts on a complaint counts as the SLA response.
+        if complaint.sla_response_met is None:
+            complaint.sla_response_met = (
+                complaint.sla_response_deadline is None or datetime.now(timezone.utc) <= complaint.sla_response_deadline
+            )
+
+        if new_status == ComplaintStatus.RESOLVED and complaint.sla_resolution_met is None:
+            complaint.sla_resolution_met = (
+                complaint.sla_resolution_deadline is None or datetime.now(timezone.utc) <= complaint.sla_resolution_deadline
+            )
 
         await log_history(
             self.db, complaint.id, HistoryAction.STATUS_CHANGED, agent.id,

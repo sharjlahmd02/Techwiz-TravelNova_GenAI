@@ -29,11 +29,14 @@ async def list_complaints(
     department_id: uuid.UUID | None = None,
     status_filter: ComplaintStatus | None = Query(default=None, alias="status"),
     priority_filter: Priority | None = Query(default=None, alias="priority"),
+    search: str | None = Query(default=None),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_role("manager", "admin")),
 ):
     service = ManagerService(db)
-    items, total = await service.list_complaints(page, page_size, department_id, status_filter, priority_filter)
+    items, total = await service.list_complaints(
+        page, page_size, department_id, status_filter, priority_filter, search
+    )
     return PaginatedStaffComplaints(
         items=items, total=total, page=page, page_size=page_size, has_next=page * page_size < total
     )

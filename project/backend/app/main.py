@@ -1,10 +1,21 @@
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
 from app.routers import admin, agent, auth, complaints, manager, reviewer
+from app.services.sla_monitor import start_sla_scheduler
 
-app = FastAPI(title="SupportNova API", version="1.0.0")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    scheduler = start_sla_scheduler()
+    yield
+    scheduler.shutdown(wait=False)
+
+
+app = FastAPI(title="SupportNova API", version="1.0.0", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,

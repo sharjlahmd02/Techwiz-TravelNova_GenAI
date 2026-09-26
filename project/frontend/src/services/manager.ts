@@ -17,7 +17,7 @@ export interface AgentUpdate {
 }
 
 export const managerApi = {
-  list: (params?: { status?: ComplaintStatus; priority?: Priority; department_id?: string; page?: number; page_size?: number }) =>
+  list: (params?: { status?: ComplaintStatus; priority?: Priority; department_id?: string; search?: string; page?: number; page_size?: number }) =>
     api.get<PaginatedStaffComplaints>('/api/manager/complaints', { params }),
 
   get: (id: string) => api.get<StaffComplaintDetail>(`/api/manager/complaints/${id}`),

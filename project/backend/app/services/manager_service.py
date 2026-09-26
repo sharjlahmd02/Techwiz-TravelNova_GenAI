@@ -1,7 +1,7 @@
 import uuid
 
 from fastapi import HTTPException, status
-from sqlalchemy import func, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.security import hash_password
@@ -27,6 +27,7 @@ class ManagerService:
         department_id: uuid.UUID | None = None,
         status_filter: ComplaintStatus | None = None,
         priority_filter: Priority | None = None,
+        search: str | None = None,
     ) -> tuple[list[Complaint], int]:
         conditions = []
         if department_id:
@@ -35,6 +36,11 @@ class ManagerService:
             conditions.append(Complaint.status == status_filter)
         if priority_filter:
             conditions.append(Complaint.priority == priority_filter)
+        if search:
+            like = f"%{search}%"
+            conditions.append(
+                or_(Complaint.title.ilike(like), Complaint.description.ilike(like), Complaint.complaint_id.ilike(like))
+            )
 
         base = select(Complaint).where(*conditions).order_by(Complaint.created_at.desc())
         total = len((await self.db.scalars(base)).all())

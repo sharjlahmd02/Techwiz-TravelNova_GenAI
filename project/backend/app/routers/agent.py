@@ -22,13 +22,16 @@ async def list_complaints(
     page_size: int = Query(default=20, ge=1, le=100),
     status_filter: ComplaintStatus | None = Query(default=None, alias="status"),
     priority_filter: Priority | None = Query(default=None, alias="priority"),
+    search: str | None = Query(default=None),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_role("agent")),
 ):
     if current_user.department_id is None:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Agent has no department assigned")
     service = AgentService(db)
-    items, total = await service.list_department_complaints(current_user, page, page_size, status_filter, priority_filter)
+    items, total = await service.list_department_complaints(
+        current_user, page, page_size, status_filter, priority_filter, search
+    )
     return PaginatedStaffComplaints(
         items=items, total=total, page=page, page_size=page_size, has_next=page * page_size < total
     )
