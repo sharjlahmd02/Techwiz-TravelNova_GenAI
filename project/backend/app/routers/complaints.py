@@ -8,7 +8,7 @@ from app.core.auth import get_current_user, require_role
 from app.database import get_db
 from app.models.complaint import Complaint
 from app.models.complaint_history import ComplaintHistory
-from app.models.enums import ComplaintStatus
+from app.models.enums import ComplaintStatus, HistoryAction
 from app.models.user import User
 from app.schemas.complaint import (
     ComplaintCreate,
@@ -23,6 +23,18 @@ from app.schemas.message import CustomerMessageCreate, CustomerMessageResponse
 from app.services.complaint_service import ComplaintService, process_complaint
 
 router = APIRouter(prefix="/api/complaints", tags=["complaints"])
+
+# Internal-only actions (agent notes, pipeline failures, conflict routing,
+# manual triage) are never surfaced to the customer -- only these are, and
+# even then without their raw internal `notes` text.
+CUSTOMER_VISIBLE_ACTIONS = {
+    HistoryAction.CREATED,
+    HistoryAction.STATUS_CHANGED,
+    HistoryAction.ASSIGNED,
+    HistoryAction.RESPONSE_SENT,
+    HistoryAction.REOPENED,
+    HistoryAction.CLOSED,
+}
 
 
 @router.post("/", response_model=ComplaintCreateResponse, status_code=status.HTTP_201_CREATED)
@@ -91,7 +103,9 @@ async def get_complaint_status(
         complaint_id=complaint.complaint_id,
         status=complaint.status,
         timeline=[
-            ComplaintTimelineEntry(action=h.action.value, notes=h.notes, created_at=h.created_at) for h in history
+            ComplaintTimelineEntry(action=h.action.value, notes=None, created_at=h.created_at)
+            for h in history
+            if h.action in CUSTOMER_VISIBLE_ACTIONS
         ],
     )
 
