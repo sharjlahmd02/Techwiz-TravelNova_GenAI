@@ -13,3 +13,4 @@ httpx
 python-dotenv
 python-docx
 apscheduler
+pytest

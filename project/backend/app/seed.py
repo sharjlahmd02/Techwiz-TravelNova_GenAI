@@ -26,6 +26,8 @@ from app.models.escalation_rule import EscalationRule
 from app.models.knowledge_base import KnowledgeBaseDocument
 from app.models.resolution_rule import ResolutionRule
 from app.models.user import User
+from app.services.ground_truth.data_loader import load_escalation_rules as parse_escalation_rules
+from app.services.ground_truth.data_loader import load_resolution_rules as parse_resolution_rules
 
 DATA_DIR = Path(os.environ.get("SUPPORTNOVA_DATA_DIR", Path(__file__).resolve().parent.parent / "data"))
 
@@ -56,9 +58,6 @@ CHANNEL_MAP = {
     "mobile app": ComplaintChannel.MOBILE_APP,
 }
 
-REFUND_KEYWORDS = ("refund",)
-COMPENSATION_KEYWORDS = ("compensation", "goodwill", "voucher", "credit")
-
 POLICY_ID_PATTERN = re.compile(r"^[A-Z]{3}-(?:POL|SOP|RUL|DOC)-\d+")
 
 
@@ -68,13 +67,6 @@ def _load_json(path: Path) -> dict | list | None:
         return None
     with path.open(encoding="utf-8") as f:
         return json.load(f)
-
-
-def _actions_suggest(actions: list[str] | None, keywords: tuple[str, ...]) -> bool:
-    if not actions:
-        return False
-    text_blob = " ".join(actions).lower()
-    return any(kw in text_blob for kw in keywords)
 
 
 async def seed_categories(db: AsyncSession, org: dict) -> int:
@@ -118,40 +110,14 @@ async def seed_departments(db: AsyncSession, org: dict) -> int:
 
 async def seed_resolution_rules(db: AsyncSession, level_name_to_int: dict[str, int]) -> int:
     print("Loading resolution rules...")
-    data = _load_json(DATA_DIR / "rules" / "resolution_rule_matrix.json")
-    if not data:
-        return 0
+    rules = parse_resolution_rules(DATA_DIR, level_name_to_int)
 
     count = 0
-    for rule_data in data["rules"]:
+    for rule_data in rules:
         existing = await db.scalar(select(ResolutionRule).where(ResolutionRule.rule_id == rule_data["rule_id"]))
         if existing is not None:
             continue
-
-        required_actions = rule_data.get("required_actions")
-        escalation_level_name = rule_data.get("escalation_level")
-
-        db.add(
-            ResolutionRule(
-                rule_id=rule_data["rule_id"],
-                category=rule_data["category"],
-                subcategory=rule_data["subcategory"],
-                conditions=rule_data.get("conditions"),
-                department=rule_data["department"],
-                supporting_department=rule_data.get("supporting_department"),
-                urgency=rule_data["urgency"],
-                priority=rule_data["priority"],
-                policy_id=rule_data.get("policy_id"),
-                escalation_required=rule_data.get("escalation_required", False),
-                escalation_level=level_name_to_int.get(escalation_level_name, 0) if escalation_level_name else 0,
-                required_actions=required_actions,
-                prohibited_actions=rule_data.get("prohibited_actions"),
-                follow_up=rule_data.get("follow_up", False),
-                follow_up_days=rule_data.get("follow_up_days"),
-                compensation_eligible=_actions_suggest(required_actions, COMPENSATION_KEYWORDS),
-                refund_eligible=_actions_suggest(required_actions, REFUND_KEYWORDS),
-            )
-        )
+        db.add(ResolutionRule(**rule_data))
         count += 1
 
     await db.commit()
@@ -160,33 +126,14 @@ async def seed_resolution_rules(db: AsyncSession, level_name_to_int: dict[str, i
 
 async def seed_escalation_rules(db: AsyncSession) -> tuple[int, dict[str, int]]:
     print("Loading escalation rules...")
-    data = _load_json(DATA_DIR / "rules" / "escalation_rules.json")
-    if not data:
-        return 0, {}
-
-    level_name_to_int = {name: int(num) for num, name in data["escalation_levels"].items()}
+    rules, level_name_to_int = parse_escalation_rules(DATA_DIR)
 
     count = 0
-    for rule_data in data["rules"]:
+    for rule_data in rules:
         existing = await db.scalar(select(EscalationRule).where(EscalationRule.rule_id == rule_data["rule_id"]))
         if existing is not None:
             continue
-
-        min_level = rule_data["min_level"]
-        is_relative = isinstance(min_level, str)
-
-        db.add(
-            EscalationRule(
-                rule_id=rule_data["rule_id"],
-                trigger_condition=rule_data["trigger"],
-                level=None if is_relative else int(min_level),
-                relative_level=min_level if is_relative else None,
-                level_name=None if is_relative else data["escalation_levels"].get(str(min_level)),
-                priority_override=rule_data.get("priority_override"),
-                response_time=rule_data["response_time"],
-                is_mandatory=True,
-            )
-        )
+        db.add(EscalationRule(**rule_data))
         count += 1
 
     await db.commit()
