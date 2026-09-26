@@ -15,14 +15,14 @@ from app.schemas.manager import (
     EscalateRequest,
     ManagerAnalytics,
 )
-from app.schemas.staff import StaffComplaintDetail, StaffComplaintSummary
+from app.schemas.staff import PaginatedStaffComplaints, StaffComplaintDetail, StaffComplaintSummary
 from app.services.manager_service import ManagerService
 from app.services.staff_service import build_staff_detail
 
 router = APIRouter(prefix="/api/manager", tags=["manager"])
 
 
-@router.get("/complaints", response_model=list[StaffComplaintSummary])
+@router.get("/complaints", response_model=PaginatedStaffComplaints)
 async def list_complaints(
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=20, ge=1, le=100),
@@ -33,8 +33,10 @@ async def list_complaints(
     current_user: User = Depends(require_role("manager", "admin")),
 ):
     service = ManagerService(db)
-    items, _ = await service.list_complaints(page, page_size, department_id, status_filter, priority_filter)
-    return items
+    items, total = await service.list_complaints(page, page_size, department_id, status_filter, priority_filter)
+    return PaginatedStaffComplaints(
+        items=items, total=total, page=page, page_size=page_size, has_next=page * page_size < total
+    )
 
 
 @router.get("/complaints/{complaint_id}", response_model=StaffComplaintDetail)

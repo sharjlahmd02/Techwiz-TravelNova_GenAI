@@ -7,14 +7,14 @@ from app.core.auth import require_role
 from app.database import get_db
 from app.models.user import User
 from app.schemas.pipeline import ConflictResolutionSchema, PipelineComparisonSchema
-from app.schemas.staff import StaffComplaintDetail, StaffComplaintSummary
+from app.schemas.staff import PaginatedStaffComplaints, StaffComplaintDetail, StaffComplaintSummary
 from app.services.reviewer_service import ReviewerService
 from app.services.staff_service import build_staff_detail
 
 router = APIRouter(prefix="/api/reviewer", tags=["reviewer"])
 
 
-@router.get("/conflicts", response_model=list[StaffComplaintSummary])
+@router.get("/conflicts", response_model=PaginatedStaffComplaints)
 async def list_conflicts(
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=20, ge=1, le=100),
@@ -22,8 +22,10 @@ async def list_conflicts(
     current_user: User = Depends(require_role("reviewer", "manager", "admin")),
 ):
     service = ReviewerService(db)
-    items, _ = await service.list_conflicts(page, page_size)
-    return items
+    items, total = await service.list_conflicts(page, page_size)
+    return PaginatedStaffComplaints(
+        items=items, total=total, page=page, page_size=page_size, has_next=page * page_size < total
+    )
 
 
 @router.get("/conflicts/{complaint_id}", response_model=StaffComplaintDetail)

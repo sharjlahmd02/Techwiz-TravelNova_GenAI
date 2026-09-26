@@ -30,6 +30,14 @@ class StaffComplaintSummary(BaseModel):
     created_at: datetime
 
 
+class PaginatedStaffComplaints(BaseModel):
+    items: list[StaffComplaintSummary]
+    total: int
+    page: int
+    page_size: int
+    has_next: bool
+
+
 class HistoryEntry(BaseModel):
     action: str
     performed_by: uuid.UUID | None

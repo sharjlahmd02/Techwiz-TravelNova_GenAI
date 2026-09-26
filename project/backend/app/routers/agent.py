@@ -9,14 +9,14 @@ from app.models.enums import ComplaintStatus, Priority
 from app.models.user import User
 from app.schemas.agent import AgentMetrics, AgentNoteCreate, AgentRequestInfo, AgentStatusUpdate
 from app.schemas.message import CustomerMessageResponse
-from app.schemas.staff import StaffComplaintDetail, StaffComplaintSummary
+from app.schemas.staff import PaginatedStaffComplaints, StaffComplaintDetail, StaffComplaintSummary
 from app.services.agent_service import AgentService
 from app.services.staff_service import build_staff_detail
 
 router = APIRouter(prefix="/api/agent", tags=["agent"])
 
 
-@router.get("/complaints", response_model=list[StaffComplaintSummary])
+@router.get("/complaints", response_model=PaginatedStaffComplaints)
 async def list_complaints(
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=20, ge=1, le=100),
@@ -28,8 +28,10 @@ async def list_complaints(
     if current_user.department_id is None:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Agent has no department assigned")
     service = AgentService(db)
-    items, _ = await service.list_department_complaints(current_user, page, page_size, status_filter, priority_filter)
-    return items
+    items, total = await service.list_department_complaints(current_user, page, page_size, status_filter, priority_filter)
+    return PaginatedStaffComplaints(
+        items=items, total=total, page=page, page_size=page_size, has_next=page * page_size < total
+    )
 
 
 @router.get("/complaints/{complaint_id}", response_model=StaffComplaintDetail)

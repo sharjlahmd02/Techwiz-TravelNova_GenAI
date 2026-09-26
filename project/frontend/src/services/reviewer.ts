@@ -1,5 +1,5 @@
 import { api } from './api'
-import type { StaffComplaintDetail, StaffComplaintSummary, PipelineComparisonSchema } from '../types/staff'
+import type { StaffComplaintDetail, PaginatedStaffComplaints, PipelineComparisonSchema } from '../types/staff'
 
 export interface ConflictFieldDecision {
   field: string
@@ -14,7 +14,7 @@ export interface ConflictResolution {
 
 export const reviewerApi = {
   listConflicts: (page = 1, pageSize = 20) =>
-    api.get<StaffComplaintSummary[]>('/api/reviewer/conflicts', { params: { page, page_size: pageSize } }),
+    api.get<PaginatedStaffComplaints>('/api/reviewer/conflicts', { params: { page, page_size: pageSize } }),
 
   getConflict: (id: string) => api.get<StaffComplaintDetail>(`/api/reviewer/conflicts/${id}`),
 

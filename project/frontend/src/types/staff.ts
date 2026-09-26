@@ -88,6 +88,14 @@ export interface StaffComplaintDetail {
   history: HistoryEntry[]
 }
 
+export interface PaginatedStaffComplaints {
+  items: StaffComplaintSummary[]
+  total: number
+  page: number
+  page_size: number
+  has_next: boolean
+}
+
 export interface AgentMetrics {
   resolved_count: number
   open_count: number

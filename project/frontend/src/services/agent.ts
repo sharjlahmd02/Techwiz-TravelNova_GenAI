@@ -1,10 +1,10 @@
 import { api } from './api'
-import type { StaffComplaintDetail, StaffComplaintSummary, AgentMetrics } from '../types/staff'
+import type { StaffComplaintDetail, PaginatedStaffComplaints, AgentMetrics } from '../types/staff'
 import type { ComplaintStatus, Priority, CustomerMessage } from '../types/complaint'
 
 export const agentApi = {
   list: (params?: { status?: ComplaintStatus; priority?: Priority; page?: number; page_size?: number }) =>
-    api.get<StaffComplaintSummary[]>('/api/agent/complaints', { params }),
+    api.get<PaginatedStaffComplaints>('/api/agent/complaints', { params }),
 
   get: (id: string) => api.get<StaffComplaintDetail>(`/api/agent/complaints/${id}`),
 

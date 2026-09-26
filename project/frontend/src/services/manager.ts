@@ -1,5 +1,5 @@
 import { api } from './api'
-import type { StaffComplaintDetail, StaffComplaintSummary } from '../types/staff'
+import type { StaffComplaintDetail, PaginatedStaffComplaints } from '../types/staff'
 import type { ManagerAnalytics, AdminUser } from '../types/admin'
 import type { ComplaintStatus, Priority } from '../types/complaint'
 
@@ -18,7 +18,7 @@ export interface AgentUpdate {
 
 export const managerApi = {
   list: (params?: { status?: ComplaintStatus; priority?: Priority; department_id?: string; page?: number; page_size?: number }) =>
-    api.get<StaffComplaintSummary[]>('/api/manager/complaints', { params }),
+    api.get<PaginatedStaffComplaints>('/api/manager/complaints', { params }),
 
   get: (id: string) => api.get<StaffComplaintDetail>(`/api/manager/complaints/${id}`),
 

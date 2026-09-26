@@ -3,26 +3,44 @@ import { useNavigate } from 'react-router-dom'
 import { AppShell } from '../../components/layout/AppShell'
 import { PriorityBadge, StatusBadge } from '../../components/ui/Badge'
 import { StatCard } from '../../components/ui/Card'
+import { Select } from '../../components/ui/Input'
+import { Pagination } from '../../components/ui/Pagination'
 import { Table } from '../../components/ui/Table'
 import { managerApi } from '../../services/manager'
 import type { StaffComplaintSummary } from '../../types/staff'
 import type { ManagerAnalytics } from '../../types/admin'
+import type { ComplaintStatus, Priority } from '../../types/complaint'
+
+const PAGE_SIZE = 20
 
 export function ManagerDashboard() {
   const navigate = useNavigate()
   const [complaints, setComplaints] = useState<StaffComplaintSummary[]>([])
+  const [total, setTotal] = useState(0)
+  const [page, setPage] = useState(1)
+  const [statusFilter, setStatusFilter] = useState<ComplaintStatus | ''>('')
+  const [priorityFilter, setPriorityFilter] = useState<Priority | ''>('')
   const [analytics, setAnalytics] = useState<ManagerAnalytics | null>(null)
 
   useEffect(() => {
     const load = async () => {
-      const [complaintsRes, analyticsRes] = await Promise.all([managerApi.list(), managerApi.analytics()])
-      setComplaints(complaintsRes.data)
+      const [complaintsRes, analyticsRes] = await Promise.all([
+        managerApi.list({
+          page,
+          page_size: PAGE_SIZE,
+          status: statusFilter || undefined,
+          priority: priorityFilter || undefined,
+        }),
+        managerApi.analytics(),
+      ])
+      setComplaints(complaintsRes.data.items)
+      setTotal(complaintsRes.data.total)
       setAnalytics(analyticsRes.data)
     }
     load()
     const interval = setInterval(load, 15_000)
     return () => clearInterval(interval)
-  }, [])
+  }, [page, statusFilter, priorityFilter])
 
   return (
     <AppShell title="Manager Dashboard">
@@ -78,11 +96,46 @@ export function ManagerDashboard() {
         </div>
       )}
 
+      <div className="mb-4 flex gap-3">
+        <Select
+          value={statusFilter}
+          onChange={(e) => {
+            setPage(1)
+            setStatusFilter(e.target.value as ComplaintStatus | '')
+          }}
+          className="w-48"
+        >
+          <option value="">All statuses</option>
+          <option value="submitted">Submitted</option>
+          <option value="processing">Processing</option>
+          <option value="under_review">Under Review</option>
+          <option value="assigned">Assigned</option>
+          <option value="in_progress">In Progress</option>
+          <option value="resolved">Resolved</option>
+          <option value="closed">Closed</option>
+        </Select>
+        <Select
+          value={priorityFilter}
+          onChange={(e) => {
+            setPage(1)
+            setPriorityFilter(e.target.value as Priority | '')
+          }}
+          className="w-40"
+        >
+          <option value="">All priorities</option>
+          <option value="P0">P0 Critical</option>
+          <option value="P1">P1 High</option>
+          <option value="P2">P2 Medium</option>
+          <option value="P3">P3 Low</option>
+        </Select>
+      </div>
+
       <Table
         rows={complaints}
         keyFor={(c) => c.id}
         onRowClick={(c) => navigate(`/manager/complaints/${c.id}`)}
         isP0={(c) => c.priority === 'P0'}
+        emptyMessage="No complaints match these filters."
         columns={[
           { header: 'ID', accessor: (c) => <span className="font-mono text-xs">{c.complaint_id}</span> },
           { header: 'Priority', accessor: (c) => <PriorityBadge priority={c.priority} /> },
@@ -91,6 +144,7 @@ export function ManagerDashboard() {
           { header: 'Received', accessor: (c) => new Date(c.created_at).toLocaleDateString() },
         ]}
       />
+      <Pagination page={page} pageSize={PAGE_SIZE} total={total} onPageChange={setPage} />
     </AppShell>
   )
 }

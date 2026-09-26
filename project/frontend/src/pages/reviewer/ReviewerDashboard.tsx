@@ -1,23 +1,29 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { AppShell } from '../../components/layout/AppShell'
+import { Pagination } from '../../components/ui/Pagination'
 import { Table } from '../../components/ui/Table'
 import { reviewerApi } from '../../services/reviewer'
 import type { StaffComplaintSummary } from '../../types/staff'
 
+const PAGE_SIZE = 20
+
 export function ReviewerDashboard() {
   const navigate = useNavigate()
   const [conflicts, setConflicts] = useState<StaffComplaintSummary[]>([])
+  const [total, setTotal] = useState(0)
+  const [page, setPage] = useState(1)
 
   useEffect(() => {
     const load = async () => {
-      const { data } = await reviewerApi.listConflicts()
-      setConflicts(data)
+      const { data } = await reviewerApi.listConflicts(page, PAGE_SIZE)
+      setConflicts(data.items)
+      setTotal(data.total)
     }
     load()
     const interval = setInterval(load, 10_000)
     return () => clearInterval(interval)
-  }, [])
+  }, [page])
 
   return (
     <AppShell title="Conflict Queue">
@@ -37,6 +43,7 @@ export function ReviewerDashboard() {
           { header: 'Received', accessor: (c) => new Date(c.created_at).toLocaleString() },
         ]}
       />
+      <Pagination page={page} pageSize={PAGE_SIZE} total={total} onPageChange={setPage} />
     </AppShell>
   )
 }

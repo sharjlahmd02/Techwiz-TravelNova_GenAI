@@ -5,24 +5,32 @@ import { PriorityBadge, StatusBadge } from '../../components/ui/Badge'
 import { SLAIndicator } from '../../components/ui/SLAIndicator'
 import { Select } from '../../components/ui/Input'
 import { StatCard } from '../../components/ui/Card'
+import { Pagination } from '../../components/ui/Pagination'
 import { Table } from '../../components/ui/Table'
 import { agentApi } from '../../services/agent'
 import type { StaffComplaintSummary } from '../../types/staff'
 import type { ComplaintStatus, Priority } from '../../types/complaint'
 
+const PAGE_SIZE = 20
+
 export function AgentDashboard() {
   const navigate = useNavigate()
   const [complaints, setComplaints] = useState<StaffComplaintSummary[]>([])
+  const [total, setTotal] = useState(0)
+  const [page, setPage] = useState(1)
   const [statusFilter, setStatusFilter] = useState<ComplaintStatus | ''>('')
   const [priorityFilter, setPriorityFilter] = useState<Priority | ''>('')
   const [metrics, setMetrics] = useState<{ resolved_count: number; open_count: number } | null>(null)
 
   const load = async () => {
     const { data } = await agentApi.list({
+      page,
+      page_size: PAGE_SIZE,
       status: statusFilter || undefined,
       priority: priorityFilter || undefined,
     })
-    setComplaints(data)
+    setComplaints(data.items)
+    setTotal(data.total)
     const { data: m } = await agentApi.metrics()
     setMetrics(m)
   }
@@ -32,7 +40,7 @@ export function AgentDashboard() {
     const interval = setInterval(load, 10_000)
     return () => clearInterval(interval)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [statusFilter, priorityFilter])
+  }, [page, statusFilter, priorityFilter])
 
   return (
     <AppShell title="Complaints">
@@ -42,14 +50,28 @@ export function AgentDashboard() {
       </div>
 
       <div className="mb-4 flex gap-3">
-        <Select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as ComplaintStatus | '')} className="w-48">
+        <Select
+          value={statusFilter}
+          onChange={(e) => {
+            setPage(1)
+            setStatusFilter(e.target.value as ComplaintStatus | '')
+          }}
+          className="w-48"
+        >
           <option value="">All statuses</option>
           <option value="assigned">Assigned</option>
           <option value="in_progress">In Progress</option>
           <option value="awaiting_customer">Awaiting Customer</option>
           <option value="resolved">Resolved</option>
         </Select>
-        <Select value={priorityFilter} onChange={(e) => setPriorityFilter(e.target.value as Priority | '')} className="w-40">
+        <Select
+          value={priorityFilter}
+          onChange={(e) => {
+            setPage(1)
+            setPriorityFilter(e.target.value as Priority | '')
+          }}
+          className="w-40"
+        >
           <option value="">All priorities</option>
           <option value="P0">P0 Critical</option>
           <option value="P1">P1 High</option>
@@ -73,6 +95,7 @@ export function AgentDashboard() {
           { header: 'Received', accessor: (c) => new Date(c.created_at).toLocaleDateString() },
         ]}
       />
+      <Pagination page={page} pageSize={PAGE_SIZE} total={total} onPageChange={setPage} />
     </AppShell>
   )
 }
