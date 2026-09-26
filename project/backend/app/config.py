@@ -6,6 +6,7 @@ class Settings(BaseSettings):
 
     DATABASE_URL: str
     GEMINI_API_KEY: str = ""
+    GEMINI_MODEL: str = "gemini-3.8-flash"
 
     JWT_SECRET_KEY: str
     JWT_ALGORITHM: str = "HS256"

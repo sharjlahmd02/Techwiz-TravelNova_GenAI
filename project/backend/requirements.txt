@@ -8,9 +8,10 @@ pydantic-settings
 python-jose[cryptography]
 bcrypt
 python-multipart
-google-generativeai
+google-genai
 httpx
 python-dotenv
 python-docx
 apscheduler
 pytest
+pytest-asyncio
