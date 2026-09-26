@@ -1,0 +1,102 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --black: #0a0a0a;
+  --white: #ffffff;
+  --bg: #f9f9f9;
+  --surface: #ffffff;
+  --border: #e4e4e7;
+  --border-strong: #a1a1aa;
+
+  --zinc-50: #fafafa;
+  --zinc-100: #f4f4f5;
+  --zinc-200: #e4e4e7;
+  --zinc-300: #d4d4d8;
+  --zinc-400: #a1a1aa;
+  --zinc-500: #71717a;
+  --zinc-600: #52525b;
+  --zinc-700: #3f3f46;
+  --zinc-800: #27272a;
+  --zinc-900: #18181b;
+
+  --text-primary: #0a0a0a;
+  --text-secondary: #52525b;
+  --text-muted: #a1a1aa;
+  --text-inverse: #ffffff;
+
+  --accent: #2563eb;
+  --accent-light: #eff6ff;
+  --accent-hover: #1d4ed8;
+
+  --p0-bg: #fef2f2;
+  --p0-border: #fecaca;
+  --p0-text: #dc2626;
+  --p0-dot: #ef4444;
+
+  --p1-bg: #fffbeb;
+  --p1-border: #fde68a;
+  --p1-text: #d97706;
+  --p1-dot: #f59e0b;
+
+  --p2-bg: #eff6ff;
+  --p2-border: #bfdbfe;
+  --p2-text: #2563eb;
+  --p2-dot: #3b82f6;
+
+  --p3-bg: #f4f4f5;
+  --p3-border: #d4d4d8;
+  --p3-text: #52525b;
+  --p3-dot: #a1a1aa;
+
+  --status-green: #16a34a;
+  --status-green-bg: #f0fdf4;
+  --status-yellow: #ca8a04;
+  --status-yellow-bg: #fefce8;
+  --status-red: #dc2626;
+  --status-red-bg: #fef2f2;
+  --status-blue: #2563eb;
+  --status-blue-bg: #eff6ff;
+  --status-zinc: #52525b;
+  --status-zinc-bg: #f4f4f5;
+
+  --conflict-critical-text: #dc2626;
+  --conflict-major-text: #d97706;
+  --conflict-minor-text: #2563eb;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0a0a0a;
+    --surface: #18181b;
+    --border: #27272a;
+    --border-strong: #3f3f46;
+    --text-primary: #fafafa;
+    --text-secondary: #a1a1aa;
+    --text-muted: #52525b;
+  }
+}
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+body {
+  margin: 0;
+  font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
+  background: var(--bg);
+  color: var(--text-primary);
+}
+
+#root {
+  min-height: 100svh;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
