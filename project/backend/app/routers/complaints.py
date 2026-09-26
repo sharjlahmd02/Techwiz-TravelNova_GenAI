@@ -8,6 +8,7 @@ from app.core.auth import get_current_user, require_role
 from app.database import get_db
 from app.models.complaint import Complaint
 from app.models.complaint_history import ComplaintHistory
+from app.models.customer_message import CustomerMessage
 from app.models.enums import ComplaintStatus, HistoryAction
 from app.models.user import User
 from app.schemas.complaint import (
@@ -108,6 +109,22 @@ async def get_complaint_status(
             if h.action in CUSTOMER_VISIBLE_ACTIONS
         ],
     )
+
+
+@router.get("/{complaint_id}/messages", response_model=list[CustomerMessageResponse])
+async def list_messages(
+    complaint_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_role("customer")),
+):
+    complaint = await _get_owned_complaint(complaint_id, db, current_user)
+    return (
+        await db.scalars(
+            select(CustomerMessage)
+            .where(CustomerMessage.complaint_id == complaint.id)
+            .order_by(CustomerMessage.created_at.asc())
+        )
+    ).all()
 
 
 @router.post("/{complaint_id}/messages", response_model=CustomerMessageResponse, status_code=status.HTTP_201_CREATED)

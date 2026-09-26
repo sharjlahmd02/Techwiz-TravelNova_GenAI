@@ -109,8 +109,11 @@ async def add_subcategory(category_id: uuid.UUID, data: SubcategoryCreate, db: A
 
 
 # ---- Departments ----
+# Read access is shared with managers (needed for agent assignment); writes stay admin-only.
 @router.get("/departments", response_model=list[DepartmentResponse])
-async def list_departments(db: AsyncSession = Depends(get_db), current_user=Depends(_require_admin)):
+async def list_departments(
+    db: AsyncSession = Depends(get_db), current_user=Depends(require_role("manager", "admin"))
+):
     return await AdminService(db).list_departments()
 
 
