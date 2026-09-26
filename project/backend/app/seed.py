@@ -187,14 +187,20 @@ async def seed_users(db: AsyncSession) -> int:
     print("Creating demo users...")
     count = 0
     for full_name, email, password, role, department_name in DEMO_USERS:
-        existing = await db.scalar(select(User).where(User.email == email))
-        if existing is not None:
-            continue
-
         department_id = None
         if department_name:
             department = await db.scalar(select(Department).where(Department.name == department_name))
             department_id = department.id if department else None
+
+        existing = await db.scalar(select(User).where(User.email == email))
+        if existing is not None:
+            # Idempotent re-run should still fix drift: e.g. an agent seeded
+            # before departments.json/organization.json was loaded would
+            # otherwise be permanently stuck with department_id=None.
+            if department_id is not None and existing.department_id != department_id:
+                existing.department_id = department_id
+                count += 1
+            continue
 
         db.add(
             User(

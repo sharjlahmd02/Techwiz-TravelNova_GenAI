@@ -182,7 +182,7 @@ async def _save_pipeline_result(db: AsyncSession, complaint_id: uuid.UUID, pipel
         )
 
 
-async def _apply_final_values(db: AsyncSession, complaint: Complaint, final_values: dict, gt_result: dict) -> None:
+async def apply_final_values(db: AsyncSession, complaint: Complaint, final_values: dict, gt_result: dict) -> None:
     category_id = None
     subcategory_id = None
     if final_values.get("category"):
@@ -278,7 +278,7 @@ async def process_complaint(complaint_id: uuid.UUID) -> None:
             complaint.status = ComplaintStatus.UNDER_REVIEW
             complaint.has_conflict = True
         else:
-            await _apply_final_values(db, complaint, comparison.final_values, gt_result)
+            await apply_final_values(db, complaint, comparison.final_values, gt_result)
             complaint.status = ComplaintStatus.ASSIGNED
             complaint.has_conflict = False
 
