@@ -99,7 +99,8 @@ CATEGORY_KEYWORDS: dict[str, list[str]] = {
     "Safety & Security": [
         "injured", "injury", "unsafe", "danger", "assault", "harassment", "fraud",
         "stranded abroad", "medical emergency", "safety incident", "slipped",
-        "medical attention", "lawyer", "lawsuit",
+        "medical attention", "lawyer", "lawsuit", "gas leak", "fire exit",
+        "locked from outside", "terrorism", "kidnapped", "evacuation",
     ],
     "Privacy & Data": [
         "data breach", "personal information", "marketing emails", "promotional",
