@@ -1,0 +1,59 @@
+{
+  "company": {
+    "name": "TravelNova Inc.",
+    "domain": "Travel & Tourism",
+    "founded": 2018,
+    "headquarters": "San Francisco, CA, USA",
+    "website": "www.travelnova.com",
+    "support_email": "support@travelnova.com",
+    "complaints_email": "complaints@travelnova.com",
+    "privacy_email": "privacy@travelnova.com",
+    "phone": "+1-888-TRAVEL-N"
+  },
+  "departments": [
+    {"id": "DEPT-01", "name": "Booking Support", "head": "Director of Booking Operations", "agents": 45, "handles": ["Booking Issues", "Visa & Documentation", "Cancellation Issues", "Package & Tour Issues"]},
+    {"id": "DEPT-02", "name": "Flight Operations", "head": "Director of Flight Services", "agents": 30, "handles": ["Flight Problems"]},
+    {"id": "DEPT-03", "name": "Hotel Services", "head": "Director of Accommodation", "agents": 25, "handles": ["Hotel Complaints"]},
+    {"id": "DEPT-04", "name": "Billing & Finance", "head": "CFO / Finance Director", "agents": 20, "handles": ["Billing & Payments"]},
+    {"id": "DEPT-05", "name": "Refunds & Compensation", "head": "Refunds Manager", "agents": 15, "handles": ["Refund Disputes"]},
+    {"id": "DEPT-06", "name": "Technical Support", "head": "CTO / Tech Support Lead", "agents": 15, "handles": ["Technical Issues"]},
+    {"id": "DEPT-07", "name": "Loyalty & Rewards", "head": "Loyalty Program Manager", "agents": 10, "handles": ["Loyalty Program"]},
+    {"id": "DEPT-08", "name": "Customer Relations", "head": "VP Customer Experience", "agents": 20, "handles": ["Customer Service Quality"]},
+    {"id": "DEPT-09", "name": "Safety & Compliance", "head": "Chief Compliance Officer", "agents": 10, "handles": ["Safety & Security", "Privacy & Data"]},
+    {"id": "DEPT-10", "name": "Transportation & Logistics", "head": "Director of Logistics", "agents": 15, "handles": ["Luggage & Baggage", "Transportation & Transfers"]}
+  ],
+  "complaint_categories": [
+    {"name": "Booking Issues", "subcategories": ["Booking Error", "Booking Not Confirmed", "Booking Modification", "Overbooking", "Double Booking", "Accessibility Needs Not Met", "Booking for Wrong Person", "VIP Customer Issue", "Travel Advisory Changed", "Currency Display Error"]},
+    {"name": "Flight Problems", "subcategories": ["Flight Delay (1-3 hours)", "Flight Delay (3-6 hours)", "Flight Delay (6+ hours)", "Flight Cancellation", "Missed Connection", "Denied Boarding", "Seat Assignment Issue", "Schedule Change by Airline", "Downgrade by Airline", "Stranded Passenger", "In-Flight Service Complaint"]},
+    {"name": "Hotel Complaints", "subcategories": ["Room Quality Below Standard", "Hotel Overbooking", "Cleanliness Issue", "Unsafe Conditions", "Check-in/Check-out Issue", "Missing Amenities", "Pest Infestation", "Noise Complaint", "Staff Behavior at Hotel", "Billing by Hotel Direct"]},
+    {"name": "Billing & Payments", "subcategories": ["Duplicate Charge", "Incorrect Charge", "Currency Conversion Dispute", "Unauthorized Transaction", "Installment Payment Issue", "Invoice Request", "Hidden Fees", "Failed Payment Hold", "Discount Not Applied", "Booking Value >$10,000", "Price Match Request"]},
+    {"name": "Refund Disputes", "subcategories": ["Refund Not Received", "Refund Amount Dispute", "Refund Denied", "Force Majeure Refund", "Partial Refund Dispute", "Refund for Non-Refundable Booking", "Travel Credit Dispute", "Refund Request Over 12 Months"]},
+    {"name": "Cancellation Issues", "subcategories": ["Free Cancellation Window Dispute", "Cancellation Fee Dispute", "Supplier Cancellation", "Group Cancellation", "Medical Emergency Cancellation", "No-Show Dispute", "Cancellation by TravelNova"]},
+    {"name": "Customer Service Quality", "subcategories": ["Rude Agent Behavior", "Discrimination Allegation", "Long Wait Time", "Misinformation by Agent", "Unresolved Previous Complaint", "Broken Promise", "Social Media Complaint"]},
+    {"name": "Technical Issues", "subcategories": ["Website Error", "Payment Gateway Error", "App Crash", "Account Locked", "Account Hacked", "Booking Lost After System Error"]},
+    {"name": "Luggage & Baggage", "subcategories": ["Lost Luggage", "Damaged Luggage", "Excess Baggage Dispute"]},
+    {"name": "Visa & Documentation", "subcategories": ["Incorrect Visa Information", "Missing Travel Documents", "Passport Name Mismatch", "Travel Advisory Changed"]},
+    {"name": "Safety & Security", "subcategories": ["Safety Incident During Travel", "Child Safety Concern", "Fraud Report", "Legal Threat", "Harassment at Destination", "Medical Emergency During Travel", "Customer Stranded Abroad", "Terrorism/Political Instability"]},
+    {"name": "Privacy & Data", "subcategories": ["Data Breach", "Data Deletion Request", "Unwanted Marketing", "Data Shared Without Consent"]},
+    {"name": "Loyalty Program", "subcategories": ["Missing Points", "Points Expiry Dispute", "Tier Status Dispute", "Redemption Issue", "Fraudulent Points Activity", "Partner Points Transfer Issue"]},
+    {"name": "Package & Tour Issues", "subcategories": ["Tour Guide No-Show", "Package Quality Below Standard", "Itinerary Change", "Activity Cancellation", "Tour Guide Unprofessional"]},
+    {"name": "Transportation & Transfers", "subcategories": ["Transfer No-Show", "Car Rental Quality Issue", "Disputed Damage Charge", "Cruise Itinerary Change", "Cruise Cabin Issue", "Transfer Late Arrival"]}
+  ],
+  "priority_levels": {
+    "P0": {"name": "Critical", "response_time": "1 hour", "resolution_time": "4 hours"},
+    "P1": {"name": "High", "response_time": "4 hours", "resolution_time": "24 hours"},
+    "P2": {"name": "Medium", "response_time": "12 hours", "resolution_time": "3 business days"},
+    "P3": {"name": "Low", "response_time": "24 hours", "resolution_time": "7 business days"}
+  },
+  "loyalty_tiers": {
+    "Silver": {"min_points": 0, "max_points": 9999},
+    "Gold": {"min_points": 10000, "max_points": 49999},
+    "Platinum": {"min_points": 50000, "max_points": 99999},
+    "Diamond": {"min_points": 100000, "max_points": null}
+  },
+  "protection_plans": {
+    "Basic": {"price": 0, "coverage": ["24/7 support", "Rebooking assistance"]},
+    "Standard": {"price": 29, "coverage": ["Trip cancellation $2,000", "Trip delay $100/day", "Baggage delay $200"]},
+    "Premium": {"price": 79, "coverage": ["Trip cancellation $10,000", "Medical $50,000", "Baggage loss $1,000", "Cancel for any reason 75%"]}
+  }
+}

@@ -1,17 +1,19 @@
 """Idempotent data loader. Run with: python -m app.seed
 
-Reads pre-built data assets from DATA_DIR (see data/README.md for the expected
-file layout and schemas) and loads them into the database. Safe to re-run —
-existing rows are matched by their natural key and skipped.
+Reads the pre-built TravelNova data assets from DATA_DIR (see data/README.md
+for the exact file layout and schemas) and loads them into the database.
+Safe to re-run -- existing rows are matched by their natural key and skipped.
 """
 
 import asyncio
 import json
 import os
+import re
+from datetime import date, datetime, timezone
 from pathlib import Path
 
 from docx import Document as DocxDocument
-from sqlalchemy import select
+from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.security import hash_password
@@ -24,7 +26,6 @@ from app.models.escalation_rule import EscalationRule
 from app.models.knowledge_base import KnowledgeBaseDocument
 from app.models.resolution_rule import ResolutionRule
 from app.models.user import User
-from app.utils.complaint_id import next_complaint_id
 
 DATA_DIR = Path(os.environ.get("SUPPORTNOVA_DATA_DIR", Path(__file__).resolve().parent.parent / "data"))
 
@@ -35,14 +36,33 @@ DEMO_USERS = [
     ("Reviewer User", "reviewer@travelnova.com", "reviewer123", UserRole.REVIEWER, None),
     ("Flights Agent", "agent.flights@travelnova.com", "agent123", UserRole.AGENT, "Flight Operations"),
     ("Hotels Agent", "agent.hotels@travelnova.com", "agent123", UserRole.AGENT, "Hotel Services"),
-    ("Billing Agent", "agent.billing@travelnova.com", "agent123", UserRole.AGENT, "Billing & Payments"),
+    ("Billing Agent", "agent.billing@travelnova.com", "agent123", UserRole.AGENT, "Billing & Finance"),
     ("Demo Customer", "customer@example.com", "customer123", UserRole.CUSTOMER, None),
 ]
 
-LOYALTY_TIER_MAP = {"silver": LoyaltyTier.SILVER, "gold": LoyaltyTier.GOLD, "platinum": LoyaltyTier.PLATINUM}
+LOYALTY_TIER_MAP = {
+    "silver": LoyaltyTier.SILVER,
+    "gold": LoyaltyTier.GOLD,
+    "platinum": LoyaltyTier.PLATINUM,
+    "diamond": LoyaltyTier.DIAMOND,
+}
+
+CHANNEL_MAP = {
+    "web form": ComplaintChannel.WEB_FORM,
+    "live chat": ComplaintChannel.CHAT,
+    "email": ComplaintChannel.EMAIL,
+    "phone": ComplaintChannel.PHONE,
+    "social media": ComplaintChannel.SOCIAL_MEDIA,
+    "mobile app": ComplaintChannel.MOBILE_APP,
+}
+
+REFUND_KEYWORDS = ("refund",)
+COMPENSATION_KEYWORDS = ("compensation", "goodwill", "voucher", "credit")
+
+POLICY_ID_PATTERN = re.compile(r"^[A-Z]{3}-(?:POL|SOP|RUL|DOC)-\d+")
 
 
-def _load_json(path: Path) -> list | None:
+def _load_json(path: Path) -> dict | list | None:
     if not path.exists():
         print(f"  skip (not found): {path}")
         return None
@@ -50,127 +70,136 @@ def _load_json(path: Path) -> list | None:
         return json.load(f)
 
 
-async def seed_categories(db: AsyncSession) -> int:
-    print("Loading categories...")
-    data = _load_json(DATA_DIR / "config" / "categories.json")
-    if not data:
-        return 0
+def _actions_suggest(actions: list[str] | None, keywords: tuple[str, ...]) -> bool:
+    if not actions:
+        return False
+    text_blob = " ".join(actions).lower()
+    return any(kw in text_blob for kw in keywords)
 
+
+async def seed_categories(db: AsyncSession, org: dict) -> int:
+    print("Loading categories...")
     count = 0
-    for cat_data in data:
-        category = await db.scalar(select(Category).where(Category.code == cat_data["code"]))
+    for i, cat_data in enumerate(org.get("complaint_categories", []), start=1):
+        code = f"CAT-{i:02d}"
+        category = await db.scalar(select(Category).where(Category.name == cat_data["name"]))
         if category is None:
-            category = Category(
-                code=cat_data["code"],
-                name=cat_data["name"],
-                description=cat_data.get("description"),
-            )
+            category = Category(code=code, name=cat_data["name"])
             db.add(category)
             await db.flush()
             count += 1
 
-        for sub_data in cat_data.get("subcategories", []):
-            subcategory = await db.scalar(select(Subcategory).where(Subcategory.code == sub_data["code"]))
-            if subcategory is None:
-                db.add(
-                    Subcategory(
-                        category_id=category.id,
-                        code=sub_data["code"],
-                        name=sub_data["name"],
-                        description=sub_data.get("description"),
-                    )
-                )
+        for j, sub_name in enumerate(cat_data.get("subcategories", []), start=1):
+            sub_code = f"{code}-SUB-{j:02d}"
+            existing = await db.scalar(
+                select(Subcategory).where(Subcategory.category_id == category.id, Subcategory.name == sub_name)
+            )
+            if existing is None:
+                db.add(Subcategory(category_id=category.id, code=sub_code, name=sub_name))
                 count += 1
 
     await db.commit()
     return count
 
 
-async def seed_departments(db: AsyncSession) -> int:
+async def seed_departments(db: AsyncSession, org: dict) -> int:
     print("Loading departments...")
-    data = _load_json(DATA_DIR / "config" / "departments.json")
-    if not data:
-        return 0
-
     count = 0
-    for dept_data in data:
-        existing = await db.scalar(select(Department).where(Department.code == dept_data["code"]))
+    for dept_data in org.get("departments", []):
+        existing = await db.scalar(select(Department).where(Department.code == dept_data["id"]))
         if existing is None:
-            db.add(
-                Department(
-                    code=dept_data["code"],
-                    name=dept_data["name"],
-                    description=dept_data.get("description"),
-                )
-            )
+            description = f"{dept_data.get('head', '')} · {dept_data.get('agents', 0)} agents".strip(" ·")
+            db.add(Department(code=dept_data["id"], name=dept_data["name"], description=description))
             count += 1
 
     await db.commit()
     return count
 
 
-async def seed_resolution_rules(db: AsyncSession) -> int:
+async def seed_resolution_rules(db: AsyncSession, level_name_to_int: dict[str, int]) -> int:
     print("Loading resolution rules...")
-    data = _load_json(DATA_DIR / "rules" / "complaint_resolution_rule_matrix.json")
+    data = _load_json(DATA_DIR / "rules" / "resolution_rule_matrix.json")
     if not data:
         return 0
 
     count = 0
-    for rule_data in data:
+    for rule_data in data["rules"]:
         existing = await db.scalar(select(ResolutionRule).where(ResolutionRule.rule_id == rule_data["rule_id"]))
-        if existing is None:
-            db.add(
-                ResolutionRule(
-                    rule_id=rule_data["rule_id"],
-                    category=rule_data["category"],
-                    subcategory=rule_data["subcategory"],
-                    conditions=rule_data.get("conditions"),
-                    department=rule_data["department"],
-                    urgency=rule_data["urgency"],
-                    priority=rule_data["priority"],
-                    policy_id=rule_data.get("policy_id"),
-                    escalation_required=rule_data.get("escalation_required", False),
-                    escalation_level=rule_data.get("escalation_level", 0),
-                    required_actions=rule_data.get("required_actions"),
-                    prohibited_actions=rule_data.get("prohibited_actions"),
-                    follow_up=rule_data.get("follow_up"),
-                    compensation_eligible=rule_data.get("compensation_eligible", False),
-                    refund_eligible=rule_data.get("refund_eligible", False),
-                )
+        if existing is not None:
+            continue
+
+        required_actions = rule_data.get("required_actions")
+        escalation_level_name = rule_data.get("escalation_level")
+
+        db.add(
+            ResolutionRule(
+                rule_id=rule_data["rule_id"],
+                category=rule_data["category"],
+                subcategory=rule_data["subcategory"],
+                conditions=rule_data.get("conditions"),
+                department=rule_data["department"],
+                supporting_department=rule_data.get("supporting_department"),
+                urgency=rule_data["urgency"],
+                priority=rule_data["priority"],
+                policy_id=rule_data.get("policy_id"),
+                escalation_required=rule_data.get("escalation_required", False),
+                escalation_level=level_name_to_int.get(escalation_level_name, 0) if escalation_level_name else 0,
+                required_actions=required_actions,
+                prohibited_actions=rule_data.get("prohibited_actions"),
+                follow_up=rule_data.get("follow_up", False),
+                follow_up_days=rule_data.get("follow_up_days"),
+                compensation_eligible=_actions_suggest(required_actions, COMPENSATION_KEYWORDS),
+                refund_eligible=_actions_suggest(required_actions, REFUND_KEYWORDS),
             )
-            count += 1
+        )
+        count += 1
 
     await db.commit()
     return count
 
 
-async def seed_escalation_rules(db: AsyncSession) -> int:
+async def seed_escalation_rules(db: AsyncSession) -> tuple[int, dict[str, int]]:
     print("Loading escalation rules...")
     data = _load_json(DATA_DIR / "rules" / "escalation_rules.json")
     if not data:
-        return 0
+        return 0, {}
+
+    level_name_to_int = {name: int(num) for num, name in data["escalation_levels"].items()}
 
     count = 0
-    for rule_data in data:
+    for rule_data in data["rules"]:
         existing = await db.scalar(select(EscalationRule).where(EscalationRule.rule_id == rule_data["rule_id"]))
-        if existing is None:
-            db.add(
-                EscalationRule(
-                    rule_id=rule_data["rule_id"],
-                    trigger_condition=rule_data["trigger_condition"],
-                    level=rule_data["level"],
-                    level_name=rule_data["level_name"],
-                    response_time=rule_data["response_time"],
-                    is_mandatory=rule_data.get("is_mandatory", False),
-                )
+        if existing is not None:
+            continue
+
+        min_level = rule_data["min_level"]
+        is_relative = isinstance(min_level, str)
+
+        db.add(
+            EscalationRule(
+                rule_id=rule_data["rule_id"],
+                trigger_condition=rule_data["trigger"],
+                level=None if is_relative else int(min_level),
+                relative_level=min_level if is_relative else None,
+                level_name=None if is_relative else data["escalation_levels"].get(str(min_level)),
+                priority_override=rule_data.get("priority_override"),
+                response_time=rule_data["response_time"],
+                is_mandatory=True,
             )
-            count += 1
+        )
+        count += 1
 
     await db.commit()
-    return count
+    return count, level_name_to_int
 
 
-async def seed_knowledge_base(db: AsyncSession) -> int:
+def _extract_title(paragraphs: list[str], company_name: str, fallback: str) -> str:
+    if paragraphs and paragraphs[0].strip() == company_name and len(paragraphs) > 1:
+        return paragraphs[1]
+    return paragraphs[0] if paragraphs else fallback
+
+
+async def seed_knowledge_base(db: AsyncSession, company_name: str) -> int:
     print("Indexing knowledge base documents...")
     policies_dir = DATA_DIR / "policies"
     if not policies_dir.exists():
@@ -179,7 +208,9 @@ async def seed_knowledge_base(db: AsyncSession) -> int:
 
     count = 0
     for docx_path in sorted(policies_dir.glob("*.docx")):
-        document_id = docx_path.stem
+        match = POLICY_ID_PATTERN.match(docx_path.stem)
+        document_id = match.group(0) if match else docx_path.stem
+
         existing = await db.scalar(
             select(KnowledgeBaseDocument).where(KnowledgeBaseDocument.document_id == document_id)
         )
@@ -188,7 +219,7 @@ async def seed_knowledge_base(db: AsyncSession) -> int:
 
         doc = DocxDocument(str(docx_path))
         paragraphs = [p.text.strip() for p in doc.paragraphs if p.text.strip()]
-        title = paragraphs[0] if paragraphs else document_id
+        title = _extract_title(paragraphs, company_name, document_id)
         content_text = "\n".join(paragraphs)
 
         db.add(
@@ -234,18 +265,27 @@ async def seed_users(db: AsyncSession) -> int:
     return count
 
 
-async def _get_or_create_customer(db: AsyncSession, name: str, email: str) -> User:
+async def _get_or_create_synthetic_customer(db: AsyncSession, complaint_id: str, loyalty_tier: LoyaltyTier | None) -> User:
+    """The dataset carries no customer name/email, so we synthesize one deterministically per complaint."""
+    email = f"customer.{complaint_id.lower()}@travelnova-demo.example"
     customer = await db.scalar(select(User).where(User.email == email))
     if customer is None:
         customer = User(
             email=email,
             password_hash=hash_password("customer123"),
-            full_name=name,
+            full_name=f"Demo Customer {complaint_id.split('-')[-1]}",
             role=UserRole.CUSTOMER,
+            loyalty_tier=loyalty_tier,
         )
         db.add(customer)
         await db.flush()
     return customer
+
+
+def _parse_date_utc(value: str | None) -> datetime | None:
+    if not value:
+        return None
+    return datetime.combine(date.fromisoformat(value), datetime.min.time(), tzinfo=timezone.utc)
 
 
 async def seed_complaints(db: AsyncSession) -> int:
@@ -254,43 +294,60 @@ async def seed_complaints(db: AsyncSession) -> int:
     if not data:
         return 0
 
-    count = 0
-    for item in data:
-        customer = await _get_or_create_customer(db, item["customer_name"], item["email"])
+    items = data["complaints"] if isinstance(data, dict) else data
 
-        existing = await db.scalar(
-            select(Complaint).where(
-                Complaint.customer_id == customer.id,
-                Complaint.title == item["title"],
-                Complaint.description == item["description"],
-            )
-        )
+    count = 0
+    max_number = 0
+    for item in items:
+        complaint_id = item["complaint_id"]
+        match = re.search(r"(\d+)$", complaint_id)
+        if match:
+            max_number = max(max_number, int(match.group(1)))
+
+        existing = await db.scalar(select(Complaint).where(Complaint.complaint_id == complaint_id))
         if existing is not None:
             continue
 
-        loyalty_tier = LOYALTY_TIER_MAP.get((item.get("loyalty_tier") or "").lower())
-        if loyalty_tier and customer.loyalty_tier != loyalty_tier:
-            customer.loyalty_tier = loyalty_tier
+        loyalty_tier = LOYALTY_TIER_MAP.get((item.get("customer_type") or "").lower())
+        customer = await _get_or_create_synthetic_customer(db, complaint_id, loyalty_tier)
 
-        db.add(
-            Complaint(
-                complaint_id=await next_complaint_id(db),
-                customer_id=customer.id,
-                title=item["title"],
-                description=item["description"],
-                channel=ComplaintChannel.WEB_FORM,
-                product_type=item["product_type"],
-                booking_reference=item.get("booking_reference"),
-                customer_selected_category=item.get("customer_selected_category"),
-                status=ComplaintStatus.SUBMITTED,
-            )
+        channel = CHANNEL_MAP.get((item.get("channel") or "").lower(), ComplaintChannel.WEB_FORM)
+        category = item.get("category")
+        subcategory = item.get("subcategory")
+        customer_selected_category = f"{category} / {subcategory}" if category and subcategory else category
+
+        submitted_at = _parse_date_utc(item.get("date"))
+
+        complaint = Complaint(
+            complaint_id=complaint_id,
+            customer_id=customer.id,
+            title=item["title"],
+            description=item["description"],
+            channel=channel,
+            product_type=item.get("product_service") or "Other",
+            booking_reference=item.get("order_reference"),
+            customer_selected_category=customer_selected_category,
+            status=ComplaintStatus.SUBMITTED,
         )
+        if submitted_at is not None:
+            complaint.created_at = submitted_at
+            complaint.updated_at = submitted_at
+
+        db.add(complaint)
         count += 1
 
         if count % 50 == 0:
             await db.commit()
 
     await db.commit()
+
+    if max_number > 0:
+        await db.execute(
+            text("SELECT setval('complaint_number_seq', GREATEST(:n, (SELECT last_value FROM complaint_number_seq)))"),
+            {"n": max_number},
+        )
+        await db.commit()
+
     return count
 
 
@@ -313,12 +370,15 @@ async def print_summary(db: AsyncSession) -> None:
 async def main() -> None:
     engine.echo = False
 
+    org = _load_json(DATA_DIR / "organization.json") or {}
+    company_name = org.get("company", {}).get("name", "")
+
     async with AsyncSessionLocal() as db:
-        new_categories = await seed_categories(db)
-        new_departments = await seed_departments(db)
-        new_rules = await seed_resolution_rules(db)
-        new_escalation_rules = await seed_escalation_rules(db)
-        new_docs = await seed_knowledge_base(db)
+        new_categories = await seed_categories(db, org)
+        new_departments = await seed_departments(db, org)
+        new_escalation_rules, level_name_to_int = await seed_escalation_rules(db)
+        new_rules = await seed_resolution_rules(db, level_name_to_int)
+        new_docs = await seed_knowledge_base(db, company_name)
         new_users = await seed_users(db)
         new_complaints = await seed_complaints(db)
 

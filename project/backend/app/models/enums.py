@@ -13,6 +13,7 @@ class LoyaltyTier(str, enum.Enum):
     SILVER = "silver"
     GOLD = "gold"
     PLATINUM = "platinum"
+    DIAMOND = "diamond"
 
 
 class ComplaintChannel(str, enum.Enum):
@@ -20,6 +21,9 @@ class ComplaintChannel(str, enum.Enum):
     CHAT = "chat"
     EMAIL = "email"
     DOCUMENT = "document"
+    PHONE = "phone"
+    SOCIAL_MEDIA = "social_media"
+    MOBILE_APP = "mobile_app"
 
 
 class ComplaintStatus(str, enum.Enum):
