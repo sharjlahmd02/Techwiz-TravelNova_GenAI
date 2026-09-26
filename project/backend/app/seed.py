@@ -36,9 +36,16 @@ DEMO_USERS = [
     ("Admin User", "admin@travelnova.com", "admin123", UserRole.ADMIN, None),
     ("Manager User", "manager@travelnova.com", "manager123", UserRole.MANAGER, None),
     ("Reviewer User", "reviewer@travelnova.com", "reviewer123", UserRole.REVIEWER, None),
+    ("Booking Agent", "agent.booking@travelnova.com", "agent123", UserRole.AGENT, "Booking Support"),
     ("Flights Agent", "agent.flights@travelnova.com", "agent123", UserRole.AGENT, "Flight Operations"),
     ("Hotels Agent", "agent.hotels@travelnova.com", "agent123", UserRole.AGENT, "Hotel Services"),
     ("Billing Agent", "agent.billing@travelnova.com", "agent123", UserRole.AGENT, "Billing & Finance"),
+    ("Refunds Agent", "agent.refunds@travelnova.com", "agent123", UserRole.AGENT, "Refunds & Compensation"),
+    ("Technical Agent", "agent.technical@travelnova.com", "agent123", UserRole.AGENT, "Technical Support"),
+    ("Loyalty Agent", "agent.loyalty@travelnova.com", "agent123", UserRole.AGENT, "Loyalty & Rewards"),
+    ("Customer Relations Agent", "agent.relations@travelnova.com", "agent123", UserRole.AGENT, "Customer Relations"),
+    ("Safety Agent", "agent.safety@travelnova.com", "agent123", UserRole.AGENT, "Safety & Compliance"),
+    ("Transport Agent", "agent.transport@travelnova.com", "agent123", UserRole.AGENT, "Transportation & Logistics"),
     ("Demo Customer", "customer@example.com", "customer123", UserRole.CUSTOMER, None),
 ]
 

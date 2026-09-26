@@ -9,7 +9,7 @@ Every complaint runs through two independent pipelines in parallel — a Google 
 - **Frontend:** React 18 + TypeScript, Tailwind CSS, Vite
 - **Backend:** FastAPI (Python 3.11+), SQLAlchemy 2.0 (async), Alembic
 - **Database:** PostgreSQL 15+
-- **AI:** Google Gemini (`google-generativeai`)
+- **AI:** Google Gemini (`google-genai`)
 
 ## Project Structure
 
@@ -45,13 +45,24 @@ npm run dev
 
 ## Demo Accounts
 
-| Role     | Email                          | Password    |
-|----------|---------------------------------|-------------|
-| Admin    | admin@travelnova.com           | admin123    |
-| Manager  | manager@travelnova.com         | manager123  |
-| Reviewer | reviewer@travelnova.com        | reviewer123 |
-| Agent    | agent.flights@travelnova.com   | agent123    |
-| Customer | customer@example.com           | customer123 |
+| Role     | Email                             | Password    |
+|----------|-------------------------------------|-------------|
+| Admin    | admin@travelnova.com               | admin123    |
+| Manager  | manager@travelnova.com             | manager123  |
+| Reviewer | reviewer@travelnova.com            | reviewer123 |
+| Agent    | agent.booking@travelnova.com       | agent123    |
+| Agent    | agent.flights@travelnova.com       | agent123    |
+| Agent    | agent.hotels@travelnova.com        | agent123    |
+| Agent    | agent.billing@travelnova.com       | agent123    |
+| Agent    | agent.refunds@travelnova.com       | agent123    |
+| Agent    | agent.technical@travelnova.com     | agent123    |
+| Agent    | agent.loyalty@travelnova.com       | agent123    |
+| Agent    | agent.relations@travelnova.com     | agent123    |
+| Agent    | agent.safety@travelnova.com        | agent123    |
+| Agent    | agent.transport@travelnova.com     | agent123    |
+| Customer | customer@example.com               | customer123 |
+
+One agent per department (10 total) — matched to whichever department a complaint gets routed to.
 
 ## Status
 
