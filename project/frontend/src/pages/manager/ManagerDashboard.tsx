@@ -1,3 +1,4 @@
+import { GitCompare, Inbox, ShieldCheck, SlidersHorizontal } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { AppShell } from '../../components/layout/AppShell'
@@ -56,9 +57,10 @@ export function ManagerDashboard() {
   return (
     <AppShell title="Manager Dashboard">
       <div className="mb-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
-        <StatCard label="Total Open" value={analytics?.total_open ?? '…'} />
+        <StatCard label="Total Open" value={analytics?.total_open ?? '…'} icon={Inbox} />
         <StatCard
           label="By Priority"
+          icon={SlidersHorizontal}
           value={
             analytics ? (
               <span className="text-sm font-normal">
@@ -72,10 +74,12 @@ export function ManagerDashboard() {
         />
         <StatCard
           label="SLA Compliance"
+          icon={ShieldCheck}
           value={analytics?.sla_compliance_rate != null ? `${Math.round(analytics.sla_compliance_rate * 100)}%` : '—'}
         />
         <StatCard
           label="Conflict Rate"
+          icon={GitCompare}
           value={analytics?.conflict_rate != null ? `${Math.round(analytics.conflict_rate * 100)}%` : '—'}
         />
       </div>

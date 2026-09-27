@@ -1,3 +1,4 @@
+import { CheckCircle2, FileStack, GitCompare, ShieldCheck } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { AppShell } from '../../components/layout/AppShell'
@@ -58,11 +59,12 @@ export function AdminDashboard() {
       }
     >
       <div className="mb-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
-        <StatCard label="Total Complaints" value={analytics.total_complaints} />
-        <StatCard label="Resolved Today" value={analytics.resolved_today} />
-        <StatCard label="Pipeline Conflicts" value={analytics.pipeline_conflicts} />
+        <StatCard label="Total Complaints" value={analytics.total_complaints} icon={FileStack} />
+        <StatCard label="Resolved Today" value={analytics.resolved_today} icon={CheckCircle2} />
+        <StatCard label="Pipeline Conflicts" value={analytics.pipeline_conflicts} icon={GitCompare} />
         <StatCard
           label="Pipeline Agreement"
+          icon={ShieldCheck}
           value={analytics.pipeline_agreement_rate != null ? `${Math.round(analytics.pipeline_agreement_rate * 100)}%` : '—'}
         />
       </div>

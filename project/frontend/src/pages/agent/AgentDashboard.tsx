@@ -1,3 +1,4 @@
+import { CheckCircle2, Inbox } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { AppShell } from '../../components/layout/AppShell'
@@ -63,8 +64,8 @@ export function AgentDashboard() {
   return (
     <AppShell title="Complaints">
       <div className="mb-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
-        <StatCard label="My Open" value={metrics?.open_count ?? '…'} />
-        <StatCard label="My Resolved" value={metrics?.resolved_count ?? '…'} />
+        <StatCard label="My Open" value={metrics?.open_count ?? '…'} icon={Inbox} />
+        <StatCard label="My Resolved" value={metrics?.resolved_count ?? '…'} icon={CheckCircle2} />
       </div>
 
       <div className="mb-4 flex gap-3">
