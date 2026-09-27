@@ -2,6 +2,7 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 
 import { ProtectedRoute } from './components/ProtectedRoute'
 import { ToastProvider } from './components/ui/Toast'
+import { LandingPage } from './pages/LandingPage'
 import { LoginPage } from './pages/LoginPage'
 import { RegisterPage } from './pages/RegisterPage'
 import { UnauthorizedPage } from './pages/UnauthorizedPage'
@@ -34,7 +35,7 @@ function App() {
     <ToastProvider>
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Navigate to="/login" replace />} />
+          <Route path="/" element={<LandingPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/unauthorized" element={<UnauthorizedPage />} />
