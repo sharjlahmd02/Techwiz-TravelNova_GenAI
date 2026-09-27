@@ -6,7 +6,21 @@ import { Modal } from '../../components/ui/Modal'
 import { Table } from '../../components/ui/Table'
 import { useToast } from '../../components/ui/Toast'
 import { adminApi } from '../../services/admin'
-import type { KnowledgeBaseDoc } from '../../types/admin'
+import type { KnowledgeBaseDoc, KnowledgeBaseStatus } from '../../types/admin'
+
+const STATUS_LABELS: Record<KnowledgeBaseStatus, string> = {
+  active: 'Active',
+  previous: 'Previous',
+  superseded: 'Superseded',
+  draft: 'Draft',
+}
+
+const STATUS_STYLES: Record<KnowledgeBaseStatus, string> = {
+  active: 'text-[--status-green]',
+  previous: 'text-[--text-secondary]',
+  superseded: 'text-[--text-muted]',
+  draft: 'text-[--status-yellow]',
+}
 
 export function KnowledgeBasePage() {
   const { show } = useToast()
@@ -55,6 +69,16 @@ export function KnowledgeBasePage() {
     await load()
   }
 
+  const handleStatusChange = async (doc: KnowledgeBaseDoc, status: KnowledgeBaseStatus) => {
+    try {
+      await adminApi.updateKnowledgeBaseDoc(doc.id, { status })
+      show(`Marked as ${STATUS_LABELS[status]}`, 'success')
+      await load()
+    } catch {
+      show('Failed to update status', 'error')
+    }
+  }
+
   return (
     <AppShell title="Knowledge Base" actions={<Button onClick={() => setModalOpen(true)}>Upload Policy</Button>}>
       <Table
@@ -67,15 +91,21 @@ export function KnowledgeBasePage() {
           {
             header: 'Status',
             accessor: (d) => (
-              <span className={d.is_active ? 'text-[--status-green]' : 'text-[--text-muted]'}>
-                {d.is_active ? 'Active' : 'Inactive'}
-              </span>
+              <select
+                value={d.status}
+                onChange={(e) => handleStatusChange(d, e.target.value as KnowledgeBaseStatus)}
+                className={`rounded-md border border-[--border] bg-transparent px-1.5 py-0.5 text-xs font-medium ${STATUS_STYLES[d.status]}`}
+              >
+                {(Object.keys(STATUS_LABELS) as KnowledgeBaseStatus[]).map((s) => (
+                  <option key={s} value={s}>{STATUS_LABELS[s]}</option>
+                ))}
+              </select>
             ),
           },
           {
             header: '',
             accessor: (d) =>
-              d.is_active && (
+              d.status === 'active' && (
                 <Button variant="ghost" onClick={() => handleDeactivate(d)}>Deactivate</Button>
               ),
           },
@@ -103,12 +133,12 @@ export function KnowledgeBasePage() {
             <Input id="doc-title" value={title} onChange={(e) => setTitle(e.target.value)} />
           </div>
           <div>
-            <Label htmlFor="doc-file">DOCX file</Label>
+            <Label htmlFor="doc-file">PDF or DOCX file</Label>
             <input
               id="doc-file"
               ref={fileInputRef}
               type="file"
-              accept=".docx"
+              accept=".pdf,.docx"
               onChange={(e) => setFile(e.target.files?.[0] ?? null)}
               className="block w-full text-sm text-[--text-secondary]"
             />

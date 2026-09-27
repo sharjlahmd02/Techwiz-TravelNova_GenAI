@@ -14,6 +14,7 @@ from sqlalchemy.orm import selectinload
 from app.config import settings
 from app.models.category import Category
 from app.models.department import Department
+from app.models.enums import KnowledgeBaseStatus
 from app.models.escalation_rule import EscalationRule
 from app.models.knowledge_base import KnowledgeBaseDocument
 from app.models.resolution_rule import ResolutionRule
@@ -95,7 +96,9 @@ async def _load_escalation_rules(db: AsyncSession) -> list[dict]:
 
 
 async def _load_policy_ids(db: AsyncSession) -> set[str]:
-    result = await db.execute(select(KnowledgeBaseDocument.document_id).where(KnowledgeBaseDocument.is_active))
+    result = await db.execute(
+        select(KnowledgeBaseDocument.document_id).where(KnowledgeBaseDocument.status == KnowledgeBaseStatus.ACTIVE)
+    )
     return set(result.scalars().all())
 
 

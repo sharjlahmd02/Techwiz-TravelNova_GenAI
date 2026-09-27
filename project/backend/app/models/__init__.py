@@ -5,6 +5,7 @@ from app.models.customer_message import CustomerMessage
 from app.models.department import Department
 from app.models.escalation_rule import EscalationRule
 from app.models.knowledge_base import KnowledgeBaseDocument
+from app.models.knowledge_base_chunk import KnowledgeBaseChunk
 from app.models.pipeline_comparison import PipelineComparison
 from app.models.pipeline_result import PipelineResult
 from app.models.resolution_rule import ResolutionRule
@@ -19,6 +20,7 @@ __all__ = [
     "Department",
     "EscalationRule",
     "KnowledgeBaseDocument",
+    "KnowledgeBaseChunk",
     "PipelineComparison",
     "PipelineResult",
     "ResolutionRule",

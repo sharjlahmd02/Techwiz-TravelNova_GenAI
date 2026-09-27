@@ -75,6 +75,9 @@ class StaffComplaintDetail(BaseModel):
 
     customer_id: uuid.UUID
     department_id: uuid.UUID | None
+    department_name: str | None = None
+    supporting_department_id: uuid.UUID | None
+    supporting_department_name: str | None = None
     assigned_agent_id: uuid.UUID | None
 
     pipeline_results: list[PipelineResultSchema] = []

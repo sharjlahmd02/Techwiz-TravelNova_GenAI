@@ -3,7 +3,7 @@ from datetime import date, datetime
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
-from app.models.enums import LoyaltyTier, UserRole
+from app.models.enums import KnowledgeBaseStatus, LoyaltyTier, UserRole
 
 
 # ---- Resolution rules ----
@@ -175,12 +175,14 @@ class KnowledgeBaseDocResponse(BaseModel):
     version: str
     effective_date: date | None
     is_active: bool
+    status: KnowledgeBaseStatus
 
 
 class KnowledgeBaseDocUpdate(BaseModel):
     title: str | None = None
     category: str | None = None
     is_active: bool | None = None
+    status: KnowledgeBaseStatus | None = None
 
 
 # ---- Audit log ----

@@ -4,6 +4,7 @@ task after the response has already been returned to the customer.
 """
 
 import asyncio
+import re
 import uuid
 from datetime import datetime, timedelta, timezone
 
@@ -16,8 +17,17 @@ from app.models.complaint import Complaint
 from app.models.complaint_history import ComplaintHistory
 from app.models.customer_message import CustomerMessage
 from app.models.department import Department
-from app.models.enums import ComplaintStatus, HistoryAction, MessageSender, PipelineType, Priority, Urgency
+from app.models.enums import (
+    ComplaintStatus,
+    HistoryAction,
+    KnowledgeBaseStatus,
+    MessageSender,
+    PipelineType,
+    Priority,
+    Urgency,
+)
 from app.models.knowledge_base import KnowledgeBaseDocument
+from app.models.knowledge_base_chunk import KnowledgeBaseChunk
 from app.models.pipeline_comparison import PipelineComparison
 from app.models.pipeline_result import PipelineResult
 from app.models.user import User
@@ -121,10 +131,21 @@ async def _recent_complaints_for_customer(db: AsyncSession, customer_id: uuid.UU
     ]
 
 
-async def _select_relevant_policies(db: AsyncSession, product_type: str, gt_result: dict) -> list[dict]:
+_WORD_RE = re.compile(r"[a-z0-9]+")
+
+
+def _words(text: str) -> set[str]:
+    return set(_WORD_RE.findall(text.lower()))
+
+
+async def _select_relevant_policies(
+    db: AsyncSession, product_type: str, complaint_text: str, gt_result: dict
+) -> tuple[list[dict], str | None]:
     policy_ids: list[str] = list(gt_result.get("policy_references") or [])
 
-    result = await db.execute(select(KnowledgeBaseDocument).where(KnowledgeBaseDocument.is_active))
+    result = await db.execute(
+        select(KnowledgeBaseDocument).where(KnowledgeBaseDocument.status == KnowledgeBaseStatus.ACTIVE)
+    )
     docs = result.scalars().all()
 
     product_lower = product_type.lower()
@@ -137,11 +158,56 @@ async def _select_relevant_policies(db: AsyncSession, product_type: str, gt_resu
             policy_ids.append(doc.document_id)
 
     by_id = {doc.document_id: doc for doc in docs}
-    return [
-        {"document_id": pid, "title": by_id[pid].title, "content_text": by_id[pid].content_text or ""}
-        for pid in policy_ids
-        if pid in by_id
-    ]
+    selected_docs = [by_id[pid] for pid in policy_ids if pid in by_id]
+
+    # SRS 9.5.7: feed GenAI the specific matched section, not a whole document.
+    # Pick each selected document's best-overlapping chunk (plain word-overlap
+    # against the complaint text -- no AI, chunking already did the real work at
+    # upload time). Falls back to the whole document's text if it has no chunks
+    # yet (pre-9.5.7 docs never re-uploaded) or nothing overlaps.
+    chunks_by_doc: dict[uuid.UUID, list[KnowledgeBaseChunk]] = {}
+    if selected_docs:
+        doc_uuids = [d.id for d in selected_docs]
+        chunk_rows = (
+            await db.scalars(select(KnowledgeBaseChunk).where(KnowledgeBaseChunk.document_id.in_(doc_uuids)))
+        ).all()
+        for chunk in chunk_rows:
+            chunks_by_doc.setdefault(chunk.document_id, []).append(chunk)
+
+    complaint_words = _words(complaint_text)
+
+    snippets: list[dict] = []
+    policy_version_parts: list[str] = []
+    for pid in policy_ids:
+        doc = by_id.get(pid)
+        if not doc:
+            continue
+
+        best_chunk = None
+        doc_chunks = chunks_by_doc.get(doc.id, [])
+        if doc_chunks and complaint_words:
+            scored = [(len(_words(c.content_text) & complaint_words), c) for c in doc_chunks]
+            best_score, best_chunk = max(scored, key=lambda pair: pair[0])
+            if best_score == 0:
+                best_chunk = None
+
+        if best_chunk:
+            label_bits = [f"Section {best_chunk.section}" if best_chunk.section else None, best_chunk.heading]
+            label = " ".join(b for b in label_bits if b)
+            title = f"{doc.title} -- {label}" if label else doc.title
+            content = best_chunk.content_text
+            policy_version_parts.append(f"{pid}@{best_chunk.version}")
+        else:
+            title = doc.title
+            content = (doc.content_text or "")[:1500]
+            policy_version_parts.append(f"{pid}@{doc.version}")
+
+        snippets.append({"document_id": pid, "title": title, "content_text": content})
+
+    # SRS req. liii wants each analysis to record which policy version(s) it was
+    # produced against -- every used document/chunk's own `version` field, joined.
+    policy_version = ", ".join(policy_version_parts) or None
+    return snippets, policy_version
 
 
 async def _save_pipeline_result(db: AsyncSession, complaint_id: uuid.UUID, pipeline: PipelineType, result: dict) -> None:
@@ -172,6 +238,10 @@ async def _save_pipeline_result(db: AsyncSession, complaint_id: uuid.UUID, pipel
             confidence_score=result.get("confidence"),
             processing_time_ms=result.get("processing_time_ms"),
             raw_output=result.get("raw_output") if pipeline == PipelineType.GENAI else None,
+            provider=result.get("provider"),
+            model_name=result.get("model"),
+            prompt_version=result.get("prompt_version"),
+            policy_version=result.get("policy_version"),
         )
     )
     if not ok:
@@ -248,7 +318,10 @@ async def process_complaint(complaint_id: uuid.UUID) -> None:
         # GenAI can be handed a lean, relevant policy set instead of all 24
         # docs on every call.
         gt_result = await asyncio.to_thread(bundle.ground_truth.process, complaint.description, gt_metadata)
-        policy_snippets = await _select_relevant_policies(db, complaint.product_type, gt_result)
+        policy_snippets, policy_version = await _select_relevant_policies(
+            db, complaint.product_type, complaint.description, gt_result
+        )
+        gt_result["policy_version"] = policy_version
 
         genai_metadata = {
             "product_type": complaint.product_type,
@@ -258,6 +331,7 @@ async def process_complaint(complaint_id: uuid.UUID) -> None:
         genai_result = await bundle.genai.process(
             complaint.description, genai_metadata, policy_snippets, bundle.valid_policy_ids
         )
+        genai_result["policy_version"] = policy_version
 
         await _save_pipeline_result(db, complaint.id, PipelineType.GROUND_TRUTH, gt_result)
         await _save_pipeline_result(db, complaint.id, PipelineType.GENAI, genai_result)
@@ -289,6 +363,15 @@ async def process_complaint(complaint_id: uuid.UUID) -> None:
         if gt_result.get("duplicate_of"):
             dup = await db.scalar(select(Complaint).where(Complaint.complaint_id == gt_result["duplicate_of"]))
             complaint.duplicate_of = dup.id if dup else None
+
+        # Ground-truth-only: not a compared/reconciled field (GenAI never computes a
+        # supporting department), so it's set unconditionally rather than waiting on
+        # conflict resolution -- same treatment as is_duplicate/duplicate_of above.
+        if gt_result.get("supporting_department"):
+            supporting_dept = await db.scalar(
+                select(Department).where(Department.code == gt_result["supporting_department"])
+            )
+            complaint.supporting_department_id = supporting_dept.id if supporting_dept else None
 
         db.add(
             ComplaintHistory(

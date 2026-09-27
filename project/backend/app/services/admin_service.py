@@ -1,7 +1,6 @@
 import uuid
 from datetime import datetime, timezone
 
-from docx import Document as DocxDocument
 from fastapi import BackgroundTasks, HTTPException, UploadFile, status
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -11,9 +10,12 @@ from app.models.category import Category, Subcategory
 from app.models.complaint import Complaint
 from app.models.complaint_history import ComplaintHistory
 from app.models.department import Department
-from app.models.enums import ComplaintChannel, ComplaintStatus, LoyaltyTier, Priority, UserRole
+from app.models.enums import ComplaintChannel, ComplaintStatus, KnowledgeBaseStatus, LoyaltyTier, Priority, UserRole
 from app.models.escalation_rule import EscalationRule
 from app.models.knowledge_base import KnowledgeBaseDocument
+from app.models.knowledge_base_chunk import KnowledgeBaseChunk
+from app.services.chunking import chunk_document
+from app.services.document_extractor import extract_pages_from_upload
 from app.models.pipeline_comparison import PipelineComparison
 from app.models.resolution_rule import ResolutionRule
 from app.models.user import User
@@ -188,12 +190,9 @@ class AdminService:
         )
         contents = await file.read()
 
-        import io
-
-        doc = DocxDocument(io.BytesIO(contents))
-        paragraphs = [p.text.strip() for p in doc.paragraphs if p.text.strip()]
-        title = title_hint or (paragraphs[0] if paragraphs else document_id)
-        content_text = "\n".join(paragraphs)
+        pages = extract_pages_from_upload(file.filename or document_id, contents)
+        content_text = "\n".join(pages)
+        title = title_hint or (content_text.splitlines()[0].strip() if content_text else document_id)
 
         file_path = f"{POLICY_DOC_ROOT}/{file.filename}"
         with open(file_path, "wb") as f:
@@ -210,6 +209,21 @@ class AdminService:
             )
             self.db.add(kb_doc)
 
+        # Re-chunk every upload (including a re-upload of an existing document_id) --
+        # reassigning the relationship drops the old chunk rows via the delete-orphan
+        # cascade and inserts the fresh set in one go.
+        kb_doc.chunks = [
+            KnowledgeBaseChunk(
+                chunk_index=i,
+                section=c.section,
+                heading=c.heading,
+                page_reference=c.page_reference,
+                version=kb_doc.version,
+                content_text=c.content_text,
+            )
+            for i, c in enumerate(chunk_document(pages))
+        ]
+
         await self.db.commit()
         await self.db.refresh(kb_doc)
         pipeline_cache.refresh()
@@ -219,8 +233,11 @@ class AdminService:
         doc = await self.db.get(KnowledgeBaseDocument, doc_id)
         if doc is None:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Document not found")
-        for field, value in data.model_dump(exclude_unset=True).items():
+        updates = data.model_dump(exclude_unset=True)
+        for field, value in updates.items():
             setattr(doc, field, value)
+        if "status" in updates:
+            doc.is_active = doc.status == KnowledgeBaseStatus.ACTIVE
         await self.db.commit()
         await self.db.refresh(doc)
         pipeline_cache.refresh()
@@ -231,6 +248,7 @@ class AdminService:
         if doc is None:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Document not found")
         doc.is_active = False
+        doc.status = KnowledgeBaseStatus.SUPERSEDED
         await self.db.commit()
         pipeline_cache.refresh()
 

@@ -83,3 +83,10 @@ class MessageSender(str, enum.Enum):
     CUSTOMER = "customer"
     AGENT = "agent"
     SYSTEM = "system"
+
+
+class KnowledgeBaseStatus(str, enum.Enum):
+    ACTIVE = "active"
+    PREVIOUS = "previous"
+    SUPERSEDED = "superseded"
+    DRAFT = "draft"

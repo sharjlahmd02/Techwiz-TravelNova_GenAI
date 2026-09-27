@@ -43,6 +43,10 @@ export interface PipelineResultSchema {
   confidence_score: number | null
   entities_extracted: EntitiesExtracted | null
   processing_time_ms: number | null
+  provider: string | null
+  model_name: string | null
+  prompt_version: string | null
+  policy_version: string | null
   created_at: string
 }
 
@@ -92,6 +96,9 @@ export interface StaffComplaintDetail {
   closed_at: string | null
   customer_id: string
   department_id: string | null
+  department_name: string | null
+  supporting_department_id: string | null
+  supporting_department_name: string | null
   assigned_agent_id: string | null
   pipeline_results: PipelineResultSchema[]
   comparison: PipelineComparisonSchema | null

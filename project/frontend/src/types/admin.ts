@@ -49,6 +49,8 @@ export interface Department {
   is_active: boolean
 }
 
+export type KnowledgeBaseStatus = 'active' | 'previous' | 'superseded' | 'draft'
+
 export interface KnowledgeBaseDoc {
   id: string
   document_id: string
@@ -58,6 +60,7 @@ export interface KnowledgeBaseDoc {
   version: string
   effective_date: string | null
   is_active: boolean
+  status: KnowledgeBaseStatus
 }
 
 export interface AdminUser {

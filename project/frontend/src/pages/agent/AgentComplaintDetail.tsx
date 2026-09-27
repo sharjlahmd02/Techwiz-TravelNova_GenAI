@@ -112,6 +112,13 @@ export function AgentComplaintDetail() {
                   <dd className="text-[--text-primary]">{primary.category ?? '—'} {primary.subcategory ? `→ ${primary.subcategory}` : ''}</dd>
                 </div>
                 <div>
+                  <dt className="text-xs text-[--text-muted]">Department</dt>
+                  <dd className="text-[--text-primary]">
+                    {complaint.department_name ?? '—'}
+                    {complaint.supporting_department_name ? ` (+ ${complaint.supporting_department_name} supporting)` : ''}
+                  </dd>
+                </div>
+                <div>
                   <dt className="text-xs text-[--text-muted]">Primary / Secondary Issue</dt>
                   <dd className="text-[--text-primary]">
                     {primary.primary_issue ?? '—'}{primary.secondary_issue ? ` + ${primary.secondary_issue}` : ''}

@@ -40,6 +40,9 @@ class Complaint(Base):
     department_id: Mapped[uuid.UUID | None] = mapped_column(
         ForeignKey("departments.id"), nullable=True, index=True
     )
+    supporting_department_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("departments.id"), nullable=True
+    )
     assigned_agent_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id"), nullable=True)
 
     escalation_level: Mapped[int] = mapped_column(Integer, default=0, nullable=False)

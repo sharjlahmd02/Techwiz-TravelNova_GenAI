@@ -75,6 +75,9 @@ class GroundTruthPipeline:
             "duplicate_similarity_score": duplicate.similarity_score,
             "sla_response_deadline": sla.response_deadline,
             "sla_resolution_deadline": sla.resolution_deadline,
+            "provider": "ground_truth",
+            "model": "keyword_classifier+rule_matcher+escalation_checker",
+            "prompt_version": None,
             "conditions": conditions,
         }
 

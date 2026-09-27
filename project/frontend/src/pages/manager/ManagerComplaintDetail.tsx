@@ -114,6 +114,12 @@ export function ManagerComplaintDetail() {
             </div>
             <h2 className="mb-2 text-lg font-medium text-[--text-primary]">{complaint.title}</h2>
             <p className="whitespace-pre-wrap text-sm text-[--text-primary]">{complaint.description}</p>
+            <p className="mt-3 text-xs text-[--text-muted]">
+              Department: <span className="text-[--text-primary]">{complaint.department_name ?? '—'}</span>
+              {complaint.supporting_department_name && (
+                <> · Supporting: <span className="text-[--text-primary]">{complaint.supporting_department_name}</span></>
+              )}
+            </p>
           </Panel>
 
           <Panel title="Pipeline Results">
@@ -139,6 +145,18 @@ export function ManagerComplaintDetail() {
                       <EntitiesList entities={r.entities_extracted} />
                     </div>
                   </div>
+                )}
+                {(r.provider || r.model_name || r.prompt_version || r.policy_version) && (
+                  <p className="mt-2 border-t border-[--zinc-100] pt-2 text-xs text-[--text-muted]">
+                    {[
+                      r.provider,
+                      r.model_name,
+                      r.prompt_version ? `prompt v${r.prompt_version}` : null,
+                      r.policy_version ? `policy: ${r.policy_version}` : null,
+                    ]
+                      .filter(Boolean)
+                      .join(' · ')}
+                  </p>
                 )}
               </div>
             ))}

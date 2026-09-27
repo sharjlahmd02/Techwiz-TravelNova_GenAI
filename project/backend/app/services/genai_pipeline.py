@@ -8,8 +8,10 @@ from typing import Any
 
 from app.services.genai.gemini_client import call_gemini
 from app.services.genai.injection_detector import detect as detect_injection
-from app.services.genai.prompt_builder import build_system_prompt, build_user_prompt
+from app.services.genai.prompt_builder import PROMPT_VERSION, build_system_prompt, build_user_prompt
 from app.services.genai.response_validator import validate_response
+
+PROVIDER = "gemini"
 
 
 class GenAIPipeline:
@@ -37,6 +39,8 @@ class GenAIPipeline:
         base = {
             "is_prompt_injection": injection.is_injection,
             "injection_patterns": injection.patterns_found,
+            "provider": PROVIDER,
+            "prompt_version": PROMPT_VERSION,
         }
 
         if not self.api_key:

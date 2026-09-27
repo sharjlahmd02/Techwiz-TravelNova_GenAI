@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.complaint import Complaint
 from app.models.complaint_history import ComplaintHistory
 from app.models.customer_message import CustomerMessage
+from app.models.department import Department
 from app.models.enums import HistoryAction
 from app.models.pipeline_comparison import PipelineComparison
 from app.models.pipeline_result import PipelineResult
@@ -41,6 +42,12 @@ async def build_staff_detail(db: AsyncSession, complaint: Complaint) -> StaffCom
         )
     ).all()
 
+    dept_ids = [d for d in (complaint.department_id, complaint.supporting_department_id) if d]
+    dept_names: dict[uuid.UUID, str] = {}
+    if dept_ids:
+        depts = (await db.scalars(select(Department).where(Department.id.in_(dept_ids)))).all()
+        dept_names = {d.id: d.name for d in depts}
+
     # Built explicitly (not via model_validate(complaint)) because the schema's
     # list field names (pipeline_results, comparison, messages, history) collide
     # with Complaint's own lazy-loaded async relationships of the same name,
@@ -70,6 +77,11 @@ async def build_staff_detail(db: AsyncSession, complaint: Complaint) -> StaffCom
         closed_at=complaint.closed_at,
         customer_id=complaint.customer_id,
         department_id=complaint.department_id,
+        department_name=dept_names.get(complaint.department_id) if complaint.department_id else None,
+        supporting_department_id=complaint.supporting_department_id,
+        supporting_department_name=(
+            dept_names.get(complaint.supporting_department_id) if complaint.supporting_department_id else None
+        ),
         assigned_agent_id=complaint.assigned_agent_id,
         pipeline_results=[PipelineResultSchema.model_validate(pr) for pr in pipeline_results],
         comparison=PipelineComparisonSchema.model_validate(comparison) if comparison else None,

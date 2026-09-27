@@ -27,7 +27,8 @@ def _extract_docx_text(content: bytes) -> str:
     return "\n".join(paragraphs).strip()
 
 
-def extract_text_from_upload(filename: str, content: bytes) -> str:
+def _validate_upload(filename: str, content: bytes) -> str:
+    """Returns the validated file extension, raising HTTPException on bad input."""
     if len(content) > MAX_UPLOAD_BYTES:
         raise HTTPException(status.HTTP_413_REQUEST_ENTITY_TOO_LARGE, detail="File must be 10MB or smaller.")
     if not content:
@@ -38,6 +39,11 @@ def extract_text_from_upload(filename: str, content: bytes) -> str:
         raise HTTPException(
             status.HTTP_400_BAD_REQUEST, detail="Only PDF and DOCX files are supported for document upload."
         )
+    return suffix
+
+
+def extract_text_from_upload(filename: str, content: bytes) -> str:
+    suffix = _validate_upload(filename, content)
 
     try:
         text = _extract_pdf_text(content) if suffix == ".pdf" else _extract_docx_text(content)
@@ -51,3 +57,29 @@ def extract_text_from_upload(filename: str, content: bytes) -> str:
         )
 
     return text
+
+
+def extract_pages_from_upload(filename: str, content: bytes) -> list[str]:
+    """Same validation as extract_text_from_upload, but preserves PDF page
+    boundaries (one string per page) instead of joining them -- needed for
+    chunk-level page_reference tracking (see chunking.py). A DOCX has no
+    native page concept, so it comes back as a single "page"."""
+    suffix = _validate_upload(filename, content)
+
+    try:
+        if suffix == ".pdf":
+            reader = PdfReader(io.BytesIO(content))
+            pages = [(page.extract_text() or "").strip() for page in reader.pages]
+            pages = [p for p in pages if p]
+        else:
+            pages = [_extract_docx_text(content)]
+    except Exception as exc:  # noqa: BLE001 -- a corrupt/unreadable file must not 500 the request
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, detail=f"Could not read this file: {exc}") from exc
+
+    if not pages:
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST,
+            detail="No readable text found in this document -- it may be a scanned image without a text layer.",
+        )
+
+    return pages

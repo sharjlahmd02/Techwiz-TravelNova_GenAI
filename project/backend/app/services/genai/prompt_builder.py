@@ -3,6 +3,12 @@ prompt is static per process (built once from the DB-loaded categories/
 departments); the user prompt is built fresh per complaint.
 """
 
+# Bump whenever OUTPUT_SCHEMA_DESCRIPTION, SENTIMENT_URGENCY_RULES, or SECURITY_RULES
+# change in a way that could affect the model's output -- persisted per-analysis on
+# PipelineResult.prompt_version so a specific complaint's result can be traced back to
+# exactly which prompt version produced it (SRS req. liii).
+PROMPT_VERSION = "1.0"
+
 OUTPUT_SCHEMA_DESCRIPTION = """Respond with ONLY a single JSON object (no markdown fences, no prose before or
 after) with exactly these fields:
 

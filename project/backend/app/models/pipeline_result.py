@@ -45,6 +45,11 @@ class PipelineResult(Base):
     processing_time_ms: Mapped[int | None] = mapped_column(Integer, nullable=True)
     raw_output: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
 
+    provider: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    model_name: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    prompt_version: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    policy_version: Mapped[str | None] = mapped_column(Text, nullable=True)
+
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False)
 
     complaint: Mapped["Complaint"] = relationship(back_populates="pipeline_results")
