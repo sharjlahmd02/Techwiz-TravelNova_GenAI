@@ -287,6 +287,12 @@ export function LoginPage() {
               Create an account
             </Link>
           </p>
+
+          <p className="text-center text-sm text-zinc-500">
+            <Link to="/" className="font-medium text-[#000] hover:underline">
+              Back to Home
+            </Link>
+          </p>
         </div>
 
         <p className="mt-3 text-center text-xs text-zinc-400">
