@@ -136,3 +136,48 @@ Available policies for this complaint:
 </customer_complaint>
 
 Respond with ONLY the JSON object described in the system prompt."""
+
+
+def build_response_regeneration_prompt(
+    complaint_text: str,
+    classification: dict,
+    policy_snippets: list[dict],
+) -> tuple[str, str]:
+    """A narrower prompt for SRS Step 58's Reviewer "Regenerate response" action --
+    the classification (category/priority/department/etc.) is already final at this
+    point (a human reviewer settled it), so this only asks Gemini to (re)draft the
+    customer-facing reply, not reclassify anything."""
+    system_prompt = f"""You are TravelNova's complaint response assistant. A human reviewer has
+already finalized this complaint's classification below -- do not reclassify it, only draft a
+professional, empathetic customer-facing reply consistent with that classification and the
+provided policies.
+
+{SECURITY_RULES}
+
+Respond with ONLY a single JSON object (no markdown fences, no prose before or after):
+{{
+  "suggested_response": string   // a professional, empathetic reply to the customer
+}}"""
+
+    policies_block = "\n\n".join(
+        f"[{p['document_id']}] {p['title']}\n{p['content_text'][:1500]}" for p in policy_snippets
+    ) or "(no directly relevant policies found -- use general judgment and cite nothing)"
+
+    user_prompt = f"""Finalized classification (set by a human reviewer, do not change):
+Category: {classification.get('category') or 'Unknown'}
+Subcategory: {classification.get('subcategory') or 'Unknown'}
+Priority: {classification.get('priority') or 'Unknown'}
+Urgency: {classification.get('urgency') or 'Unknown'}
+Refund eligible: {classification.get('refund_eligible')}
+Compensation eligible: {classification.get('compensation_eligible')}
+
+Available policies for this complaint:
+{policies_block}
+
+<customer_complaint>
+{complaint_text}
+</customer_complaint>
+
+Respond with ONLY the JSON object described in the system prompt."""
+
+    return system_prompt, user_prompt

@@ -37,9 +37,24 @@ export function ConflictResolutionPage() {
   const [rationale, setRationale] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
-  useEffect(() => {
+  const [showRejectInput, setShowRejectInput] = useState(false)
+  const [rejectReason, setRejectReason] = useState('')
+  const [rejecting, setRejecting] = useState(false)
+
+  const [comment, setComment] = useState('')
+  const [addingComment, setAddingComment] = useState(false)
+
+  const [regenerating, setRegenerating] = useState(false)
+  const [regeneratedResponse, setRegeneratedResponse] = useState<string | null>(null)
+
+  const load = () => {
     if (!id) return
     reviewerApi.getConflict(id).then(({ data }) => setComplaint(data))
+  }
+
+  useEffect(() => {
+    load()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id])
 
   const conflictFields = useMemo(() => new Set(complaint?.comparison?.conflict_fields ?? []), [complaint])
@@ -76,6 +91,54 @@ export function ConflictResolutionPage() {
       show(message, 'error')
     } finally {
       setSubmitting(false)
+    }
+  }
+
+  const handleReject = async () => {
+    if (!id || !rejectReason.trim()) {
+      show('Please explain why this is being rejected', 'error')
+      return
+    }
+    setRejecting(true)
+    try {
+      await reviewerApi.reject(id, rejectReason.trim())
+      show('Sent back for re-analysis', 'success')
+      navigate('/reviewer/dashboard')
+    } catch (err) {
+      const message = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail ?? 'Failed to reject'
+      show(message, 'error')
+    } finally {
+      setRejecting(false)
+    }
+  }
+
+  const handleAddComment = async () => {
+    if (!id || !comment.trim()) return
+    setAddingComment(true)
+    try {
+      await reviewerApi.addComment(id, comment.trim())
+      setComment('')
+      show('Comment added', 'success')
+      load()
+    } catch {
+      show('Failed to add comment', 'error')
+    } finally {
+      setAddingComment(false)
+    }
+  }
+
+  const handleRegenerate = async () => {
+    if (!id) return
+    setRegenerating(true)
+    try {
+      const { data } = await reviewerApi.regenerateResponse(id)
+      setRegeneratedResponse(data.suggested_response)
+      show('Response regenerated', 'success')
+    } catch (err) {
+      const message = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail ?? 'Failed to regenerate response'
+      show(message, 'error')
+    } finally {
+      setRegenerating(false)
     }
   }
 
@@ -145,6 +208,18 @@ export function ConflictResolutionPage() {
           </div>
         </div>
       )}
+
+      <div className="mb-4 rounded-lg border border-[--border] bg-[--surface] p-4">
+        <div className="mb-2 flex items-center justify-between">
+          <p className="text-xs font-medium text-[--text-secondary]">Suggested response</p>
+          <Button variant="ghost" onClick={handleRegenerate} loading={regenerating}>
+            {regeneratedResponse || genaiResult?.suggested_response ? 'Regenerate response' : 'Generate response'}
+          </Button>
+        </div>
+        <p className="whitespace-pre-wrap text-sm text-[--text-primary]">
+          {regeneratedResponse ?? genaiResult?.suggested_response ?? 'No response drafted yet.'}
+        </p>
+      </div>
 
       <div className="overflow-hidden rounded-lg border border-[--border] bg-[--surface]">
         <table className="w-full text-left text-sm">
@@ -220,6 +295,34 @@ export function ConflictResolutionPage() {
         </table>
       </div>
 
+      <div className="mt-6 rounded-lg border border-[--border] bg-[--surface] p-4">
+        <p className="mb-3 text-xs font-medium text-[--text-secondary]">Comments</p>
+        <div className="mb-3 space-y-2">
+          {complaint.history.filter((h) => h.action === 'reviewer_comment').length === 0 && (
+            <p className="text-sm text-[--text-muted]">No comments yet.</p>
+          )}
+          {complaint.history
+            .filter((h) => h.action === 'reviewer_comment')
+            .map((h, i) => (
+              <div key={i} className="rounded-md bg-[--zinc-50] px-3 py-2 text-sm text-[--text-primary]">
+                <p>{h.notes}</p>
+                <p className="mt-1 text-xs text-[--text-muted]">{new Date(h.created_at).toLocaleString()}</p>
+              </div>
+            ))}
+        </div>
+        <div className="flex gap-2">
+          <Input
+            className="flex-1"
+            value={comment}
+            onChange={(e) => setComment(e.target.value)}
+            placeholder="Add a comment for other staff..."
+          />
+          <Button variant="secondary" onClick={handleAddComment} loading={addingComment}>
+            Add
+          </Button>
+        </div>
+      </div>
+
       <div className="mt-6">
         <Label htmlFor="rationale">Your reasoning</Label>
         <Textarea
@@ -230,9 +333,29 @@ export function ConflictResolutionPage() {
         />
       </div>
 
-      <Button className="mt-4 w-full" onClick={handleSubmit} loading={submitting}>
-        Submit Resolution
-      </Button>
+      <div className="mt-4 flex gap-3">
+        <Button className="flex-1" onClick={handleSubmit} loading={submitting}>
+          Submit Resolution
+        </Button>
+        <Button variant="destructive" onClick={() => setShowRejectInput((v) => !v)}>
+          Reject
+        </Button>
+      </div>
+
+      {showRejectInput && (
+        <div className="mt-3 rounded-lg border border-p0-border bg-p0-bg p-4">
+          <Label htmlFor="reject-reason">Why is this being rejected?</Label>
+          <Textarea
+            id="reject-reason"
+            value={rejectReason}
+            onChange={(e) => setRejectReason(e.target.value)}
+            placeholder="Both pipeline outputs are unusable for this complaint -- explain why. It will be re-run through both pipelines from scratch."
+          />
+          <Button className="mt-3" variant="destructive" onClick={handleReject} loading={rejecting}>
+            Confirm reject &amp; re-analyze
+          </Button>
+        </div>
+      )}
     </AppShell>
   )
 }

@@ -138,7 +138,7 @@ def _words(text: str) -> set[str]:
     return set(_WORD_RE.findall(text.lower()))
 
 
-async def _select_relevant_policies(
+async def select_relevant_policies(
     db: AsyncSession, product_type: str, complaint_text: str, gt_result: dict
 ) -> tuple[list[dict], str | None]:
     policy_ids: list[str] = list(gt_result.get("policy_references") or [])
@@ -318,7 +318,7 @@ async def process_complaint(complaint_id: uuid.UUID) -> None:
         # GenAI can be handed a lean, relevant policy set instead of all 24
         # docs on every call.
         gt_result = await asyncio.to_thread(bundle.ground_truth.process, complaint.description, gt_metadata)
-        policy_snippets, policy_version = await _select_relevant_policies(
+        policy_snippets, policy_version = await select_relevant_policies(
             db, complaint.product_type, complaint.description, gt_result
         )
         gt_result["policy_version"] = policy_version

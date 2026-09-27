@@ -1,15 +1,19 @@
 import uuid
 
 from fastapi import HTTPException, status
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.config import settings
 from app.models.complaint import Complaint
-from app.models.enums import ComplaintStatus, HistoryAction
+from app.models.enums import ComplaintStatus, HistoryAction, PipelineType
 from app.models.pipeline_comparison import PipelineComparison
+from app.models.pipeline_result import PipelineResult
 from app.models.user import User
 from app.schemas.pipeline import ConflictResolutionSchema
-from app.services.complaint_service import apply_final_values
+from app.services.complaint_service import apply_final_values, select_relevant_policies
+from app.services.genai.gemini_client import call_gemini
+from app.services.genai.prompt_builder import build_response_regeneration_prompt
 from app.services.ground_truth.sla_calculator import calculate_sla
 from app.services.pipeline_comparator import COMPARED_FIELDS
 from app.services.staff_service import log_history
@@ -128,3 +132,79 @@ class ReviewerService:
         total = len((await self.db.scalars(base)).all())
         items = (await self.db.scalars(base.offset((page - 1) * page_size).limit(page_size))).all()
         return list(items), total
+
+    async def reject(self, complaint: Complaint, reviewer: User, reason: str) -> Complaint:
+        """SRS Step 58's "Reject" action: neither pipeline's classification is
+        trusted, so both are discarded and the complaint is sent back through
+        the full dual-pipeline analysis from scratch. Deletes the existing
+        PipelineResult/PipelineComparison rows first -- PipelineComparison.
+        complaint_id is unique, so process_complaint() would otherwise hit an
+        integrity error trying to insert a second comparison for this complaint."""
+        old_status = complaint.status.value
+
+        await self.db.execute(delete(PipelineResult).where(PipelineResult.complaint_id == complaint.id))
+        await self.db.execute(delete(PipelineComparison).where(PipelineComparison.complaint_id == complaint.id))
+
+        complaint.has_conflict = False
+        complaint.conflict_resolved_by = None
+        complaint.conflict_resolved_at = None
+
+        await log_history(
+            self.db, complaint.id, HistoryAction.REJECTED, reviewer.id,
+            old_value={"status": old_status}, new_value={"status": "processing"}, notes=reason,
+        )
+
+        await self.db.commit()
+        await self.db.refresh(complaint)
+        return complaint
+
+    async def add_comment(self, complaint: Complaint, reviewer: User, comment: str) -> None:
+        await log_history(self.db, complaint.id, HistoryAction.REVIEWER_COMMENT, reviewer.id, notes=comment)
+        await self.db.commit()
+
+    async def regenerate_response(self, complaint: Complaint, reviewer: User) -> str:
+        comparison = await self.db.scalar(
+            select(PipelineComparison).where(PipelineComparison.complaint_id == complaint.id)
+        )
+        classification = (comparison.final_values if comparison else None) or (
+            comparison.ground_truth_values if comparison else None
+        ) or {}
+        if not classification.get("category"):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="No finalized classification available yet to base a response on",
+            )
+
+        if not settings.GEMINI_API_KEY:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="GenAI is not configured"
+            )
+
+        policy_snippets, _ = await select_relevant_policies(
+            self.db, complaint.product_type, complaint.description, {"policy_references": []}
+        )
+        system_prompt, user_prompt = build_response_regeneration_prompt(
+            complaint.description, classification, policy_snippets
+        )
+        result = await call_gemini(system_prompt, user_prompt, settings.GEMINI_API_KEY, settings.GEMINI_MODEL)
+        if not result.success or not isinstance(result.data, dict) or not result.data.get("suggested_response"):
+            raise HTTPException(
+                status_code=status.HTTP_502_BAD_GATEWAY,
+                detail="Could not regenerate a response right now -- try again shortly",
+            )
+
+        new_response = str(result.data["suggested_response"]).strip()
+
+        genai_result = await self.db.scalar(
+            select(PipelineResult).where(
+                PipelineResult.complaint_id == complaint.id, PipelineResult.pipeline == PipelineType.GENAI
+            )
+        )
+        if genai_result:
+            genai_result.suggested_response = new_response
+
+        await log_history(
+            self.db, complaint.id, HistoryAction.RESPONSE_REGENERATED, reviewer.id, notes=new_response[:1000]
+        )
+        await self.db.commit()
+        return new_response

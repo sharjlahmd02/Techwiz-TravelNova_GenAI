@@ -77,6 +77,9 @@ class HistoryAction(str, enum.Enum):
     CONFLICT_RESOLVED = "conflict_resolved"
     REOPENED = "reopened"
     CLOSED = "closed"
+    REVIEWER_COMMENT = "reviewer_comment"
+    REJECTED = "rejected"
+    RESPONSE_REGENERATED = "response_regenerated"
 
 
 class MessageSender(str, enum.Enum):

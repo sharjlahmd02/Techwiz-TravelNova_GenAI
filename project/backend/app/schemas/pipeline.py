@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class PipelineResultSchema(BaseModel):
@@ -55,3 +55,15 @@ class ConflictFieldDecision(BaseModel):
 class ConflictResolutionSchema(BaseModel):
     decisions: list[ConflictFieldDecision]
     rationale: str
+
+
+class ConflictRejectSchema(BaseModel):
+    reason: str = Field(min_length=1, max_length=2000)
+
+
+class ReviewerCommentSchema(BaseModel):
+    comment: str = Field(min_length=1, max_length=5000)
+
+
+class RegeneratedResponseSchema(BaseModel):
+    suggested_response: str
