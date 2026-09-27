@@ -7,7 +7,6 @@ import {
   LayoutDashboard,
   ListChecks,
   LogOut,
-  MessageSquareCode,
   Tags,
   TrendingUp,
   Users,
@@ -88,11 +87,8 @@ export function AppShell({ title, actions, children }: { title: string; actions?
   return (
     <div className="flex min-h-screen bg-[#FAFAFA]">
       <aside className="flex w-64 flex-shrink-0 flex-col border-r border-zinc-200 bg-white">
-        <div className="flex h-16 items-center gap-2.5 px-5">
-          <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#0A0A0A] text-white">
-            <MessageSquareCode className="h-4 w-4" strokeWidth={2.25} />
-          </span>
-          <span className="text-[15px] font-bold tracking-tight text-[#0A0A0A]">SupportNova</span>
+        <div className="flex h-16 items-center px-5">
+          <img src="/logo.png" alt="SupportNova" width={122} height={44} className="h-11 w-auto object-contain" />
         </div>
 
         <nav className="flex-1 overflow-y-auto px-3 py-3">

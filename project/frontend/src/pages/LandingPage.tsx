@@ -1,8 +1,6 @@
-import { useState, type FormEvent, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import {
   ArrowDown,
-  MessageSquareCode,
   Sparkles,
   ShieldCheck,
   Activity,
@@ -22,6 +20,14 @@ import {
   X,
 } from "lucide-react";
 
+import {
+  useState,
+  useEffect,
+  useRef,
+  type FormEvent,
+  type ReactNode,
+} from "react";
+
 // Inter is already loaded globally (see index.css) and set as the default
 // sans font in tailwind.config.js -- no separate font import needed here.
 
@@ -29,7 +35,6 @@ const NAV_LINKS = [
   { label: "Home", id: "top" },
   { label: "Features", id: "features" },
   { label: "How It Works", id: "how-it-works" },
-  { label: "Pricing", id: "pricing" },
   { label: "Help", id: "footer" },
 ];
 
@@ -41,14 +46,13 @@ function avatar(n: number, size = 64) {
 
 function Logo({ className = "" }: { className?: string }) {
   return (
-    <div className={`flex items-center gap-2 ${className}`}>
-      <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-black text-white">
-        <MessageSquareCode className="h-4 w-4" strokeWidth={2.5} />
-      </span>
-      <span className="text-[15px] font-bold tracking-tight text-black">
-        SupportNova
-      </span>
-    </div>
+    <img
+      src="/logo.png"
+      alt="SupportNova"
+      width={111}
+      height={40}
+      className={`h-9 w-auto object-contain sm:h-10 ${className}`}
+    />
   );
 }
 
@@ -68,12 +72,16 @@ function PillButton({
   className?: string;
 }) {
   const base =
-    "inline-flex items-center justify-center gap-1.5 rounded-full px-5 py-2.5 text-sm font-medium transition-colors";
+    "inline-flex items-center justify-center gap-1.5 rounded-full px-5 py-2.5 text-sm font-medium transition-all duration-200 ease-out active:scale-[0.98]";
   const variants: Record<string, string> = {
-    primary: "bg-black text-white hover:bg-zinc-800",
-    outline: "border border-zinc-300 text-black hover:border-zinc-400",
-    inverse: "bg-white text-black hover:bg-zinc-100",
-    outlineInverse: "border border-white/40 text-white hover:border-white",
+    primary:
+      "bg-black text-white shadow-[0_1px_2px_rgba(0,0,0,0.24)] hover:bg-zinc-800 hover:shadow-[0_8px_20px_-6px_rgba(0,0,0,0.10)] hover:-translate-y-0.5",
+    outline:
+      "border border-zinc-300 text-black hover:border-zinc-400 hover:bg-zinc-50 hover:-translate-y-0.5",
+    inverse:
+      "bg-white text-black shadow-[0_1px_2px_rgba(0,0,0,0.08)] hover:bg-zinc-100 hover:-translate-y-0.5",
+    outlineInverse:
+      "border border-white/30 text-white hover:border-white hover:bg-white/5 hover:-translate-y-0.5",
   };
   const classes = `${base} ${variants[variant]} ${className}`;
 
@@ -100,11 +108,11 @@ function SectionHeading({
 }) {
   return (
     <div className="flex flex-col items-start justify-between gap-6 md:flex-row md:items-end">
-      <h2 className="text-[32px] font-bold leading-tight tracking-tight text-black md:text-[36px]">
+      <h2 className="text-[34px] font-semibold leading-[1.15] tracking-tight text-black md:text-[40px]">
         {title}
       </h2>
       {subtext && (
-        <p className="max-w-sm text-[15px] text-zinc-500 md:text-right">
+        <p className="max-w-sm text-[15px] leading-relaxed text-zinc-500 md:text-right">
           {subtext}
         </p>
       )}
@@ -146,7 +154,7 @@ function MiniBarList() {
     },
   ];
   return (
-    <div className="mt-5 space-y-2.5">
+    <div className="mt-6 space-y-3">
       {rows.map((r) => (
         <div key={r.name} className="flex items-center gap-3">
           <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${r.dot}`} />
@@ -155,7 +163,7 @@ function MiniBarList() {
           </span>
           <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-zinc-100">
             <div
-              className={`h-full rounded-full ${r.bar}`}
+              className={`h-full rounded-full ${r.bar} transition-all duration-500 ease-out`}
               style={{ width: `${r.pct}%` }}
             />
           </div>
@@ -170,7 +178,7 @@ function MiniBarList() {
 
 function MiniLineChart() {
   return (
-    <div className="relative mt-5">
+    <div className="relative mt-6">
       <svg viewBox="0 0 220 70" className="h-20 w-full" fill="none">
         <polyline
           points="0,60 30,52 60,55 90,38 120,42 150,20 180,24 220,6"
@@ -186,7 +194,7 @@ function MiniLineChart() {
           stroke="none"
         />
       </svg>
-      <span className="absolute right-0 top-0 rounded-full border border-zinc-200 bg-white px-2.5 py-1 text-[11px] font-semibold text-black shadow-sm">
+      <span className="absolute right-0 top-0 rounded-full border border-zinc-200 bg-white px-2.5 py-1 text-[11px] font-semibold text-black shadow-[0_2px_8px_-2px_rgba(0,0,0,0.12)]">
         99.2% accuracy
       </span>
     </div>
@@ -201,9 +209,9 @@ function MiniTimeline() {
         <div key={label} className="flex flex-1 items-center last:flex-none">
           <div className="flex flex-col items-center gap-1.5">
             <span
-              className={`flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold ${
+              className={`flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold transition-colors ${
                 i === 1
-                  ? "bg-black text-white"
+                  ? "bg-black text-white shadow-[0_2px_6px_-1px_rgba(0,0,0,0.4)]"
                   : "border border-zinc-300 bg-white text-zinc-400"
               }`}
             >
@@ -226,14 +234,14 @@ function MiniTimeline() {
 
 function ProgressBar({ pct, label }: { pct: number; label: string }) {
   return (
-    <div className="mt-5">
+    <div className="mt-6">
       <div className="mb-1.5 flex items-center justify-between text-[11px]">
         <span className="text-zinc-500">{label}</span>
         <span className="font-semibold text-black">{pct}%</span>
       </div>
       <div className="h-1.5 w-full overflow-hidden rounded-full bg-zinc-100">
         <div
-          className="h-full rounded-full bg-black"
+          className="h-full rounded-full bg-black transition-all duration-500 ease-out"
           style={{ width: `${pct}%` }}
         />
       </div>
@@ -294,7 +302,7 @@ function SocialIcon({
     <a
       href="#"
       aria-label={type}
-      className="flex h-9 w-9 items-center justify-center rounded-full bg-zinc-100 text-zinc-500 transition-colors hover:bg-black hover:text-white"
+      className="flex h-9 w-9 items-center justify-center rounded-full bg-zinc-100 text-zinc-500 transition-all duration-200 hover:-translate-y-0.5 hover:bg-black hover:text-white"
     >
       <svg viewBox="0 0 24 24" className="h-4 w-4" fill="currentColor">
         {paths[type]}
@@ -341,59 +349,105 @@ const TESTIMONIALS = [
   },
 ];
 
-const PLANS = [
-  {
-    key: "starter",
-    name: "Starter",
-    tagline: "For individual travelers or small support teams",
-    monthly: 0,
-    yearly: 0,
-    highlighted: false,
-    features: [
-      "Up to 20 complaints / month",
-      "Email support",
-      "Basic status tracking",
-      "Community help center",
-    ],
-  },
-  {
-    key: "professional",
-    name: "Professional",
-    tagline: "For growing support teams",
-    monthly: 49,
-    yearly: 39,
-    highlighted: true,
-    features: [
-      "Unlimited complaints",
-      "Dual AI + rule-based validation",
-      "Priority SLA tracking",
-      "Role-based dashboards",
-      "Priority email & chat support",
-    ],
-  },
-  {
-    key: "enterprise",
-    name: "Enterprise",
-    tagline: "For large travel companies",
-    monthly: null,
-    yearly: null,
-    highlighted: false,
-    features: [
-      "Dedicated account manager",
-      "Custom SLA agreements",
-      "Advanced audit & compliance",
-      "SSO & custom integrations",
-      "24/7 phone support",
-    ],
-  },
-] as const;
+//animation hero section
+
+function WavyBackground({ className = "" }: { className?: string }) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    const ctx = canvas?.getContext("2d");
+    if (!canvas || !ctx) return;
+
+    const prefersReduced = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
+
+    let width = 0;
+    let height = 0;
+    let raf = 0;
+    let t = 0;
+
+    const resize = () => {
+      const rect = canvas.getBoundingClientRect();
+      const dpr = window.devicePixelRatio || 1;
+      width = rect.width;
+      height = rect.height;
+      canvas.width = width * dpr;
+      canvas.height = height * dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    };
+    resize();
+    window.addEventListener("resize", resize);
+
+    // Grayscale ribbons -- tuned to the site's zinc/black palette
+    const waves = [
+  { amp: 34, freq: 0.0032, speed: 0.018, phase: 0,   yBase: 0.42, width: 90,  color: "24,24,27",   alpha: 0.22 }, // near-black (zinc-900)
+  { amp: 46, freq: 0.0024, speed: 0.013, phase: 2.1, yBase: 0.55, width: 110, color: "180,140,60",  alpha: 0.16 }, // muted antique gold
+  { amp: 40, freq: 0.0028, speed: 0.021, phase: 4.3, yBase: 0.68, width: 100, color: "9,9,11",      alpha: 0.20 }, // deeper black (zinc-950)
+  { amp: 52, freq: 0.002,  speed: 0.009, phase: 1.4, yBase: 0.8,  width: 130, color: "212,175,120", alpha: 0.13 }, // soft champagne gold
+];
+
+    const draw = () => {
+      ctx.clearRect(0, 0, width, height);
+      ctx.filter = "blur(18px)";
+      ctx.globalCompositeOperation = "multiply";
+
+      waves.forEach((w) => {
+        ctx.beginPath();
+        for (let x = 0; x <= width; x += 6) {
+          const y =
+            height * w.yBase +
+            Math.sin(x * w.freq + t * w.speed + w.phase) * w.amp +
+            Math.sin(x * w.freq * 2.3 + t * w.speed * 0.6 + w.phase) *
+              (w.amp * 0.3);
+          if (x === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        }
+        ctx.lineWidth = w.width;
+        ctx.strokeStyle = `rgba(24,24,27,${w.alpha})`;
+        ctx.lineCap = "round";
+        // ctx.strokeStyle = `rgba(0,0,0,${w.alpha})`;
+        // ctx.strokeStyle = `rgba(0,0,0,${w.alpha})`; black
+        ctx.strokeStyle = `rgba(${w.color},${w.alpha})`;
+        ctx.stroke();
+      });
+
+      ctx.filter = "none";
+      ctx.globalCompositeOperation = "source-over";
+
+      t += 1;
+      if (!prefersReduced) raf = requestAnimationFrame(draw);
+    };
+    draw();
+
+    return () => {
+      window.removeEventListener("resize", resize);
+      cancelAnimationFrame(raf);
+    };
+  }, []);
+
+  return (
+    <canvas
+      ref={canvasRef}
+      aria-hidden
+      className={`pointer-events-none absolute inset-0 h-full w-full ${className}`}
+    />
+  );
+}
 
 export function LandingPage() {
   const [email, setEmail] = useState("");
   const [subscribed, setSubscribed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [billing, setBilling] = useState<"monthly" | "yearly">("monthly");
   const [activeTestimonial, setActiveTestimonial] = useState(0);
+
+  //for animation
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    const id = requestAnimationFrame(() => setMounted(true));
+    return () => cancelAnimationFrame(id);
+  }, []);
 
   const handleSubscribe = (e: FormEvent) => {
     e.preventDefault();
@@ -411,9 +465,12 @@ export function LandingPage() {
   };
 
   return (
-    <div id="top" className="min-h-screen bg-white font-sans text-black">
+    <div
+      id="top"
+      className="min-h-screen bg-white font-sans text-black antialiased"
+    >
       {/* 1. Navbar */}
-      <header className="sticky top-0 z-50 border-b border-zinc-200/70 bg-white/80 backdrop-blur-md">
+      <header className="sticky top-0 z-50 border-b border-zinc-200/80 bg-white/75 backdrop-blur-md backdrop-saturate-150">
         <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-6 lg:px-8">
           <a href="#top" onClick={scrollToSection("top")} className="shrink-0">
             <Logo />
@@ -425,7 +482,7 @@ export function LandingPage() {
                 key={link.label}
                 href={`#${link.id}`}
                 onClick={scrollToSection(link.id)}
-                className="text-[13px] font-medium tracking-[0.08em] text-zinc-500 transition-colors duration-200 hover:text-black"
+                className="text-[13px] font-medium tracking-[0.04em] text-zinc-500 transition-colors duration-200 hover:text-black"
               >
                 {link.label}
               </a>
@@ -436,9 +493,9 @@ export function LandingPage() {
             <PillButton
               to="/register"
               variant="primary"
-              className="hidden sm:inline-flex !rounded-full border border-black bg-black px-6 py-2.5 text-[13px] font-medium tracking-[0.06em] text-white transition-colors duration-200 hover:bg-zinc-800"
+              className="hidden sm:inline-flex !rounded-full border border-black bg-black px-6 py-2.5 text-[13px] font-medium tracking-[0.02em] text-white"
             >
-              Submit Complaint <ChevronRight className="h-5 w-5" />
+              Submit Complaint <ChevronRight className="h-4 w-4" />
             </PillButton>
 
             <button
@@ -456,14 +513,14 @@ export function LandingPage() {
         </div>
 
         {mobileMenuOpen && (
-          <div className="border-t border-zinc-200/70 bg-white px-6 py-6 md:hidden">
+          <div className="animate-[fadeIn_0.2s_ease-out] border-t border-zinc-200/80 bg-white px-6 py-6 md:hidden">
             <nav className="flex flex-col gap-5">
               {NAV_LINKS.map((link) => (
                 <a
                   key={link.label}
                   href={`#${link.id}`}
                   onClick={scrollToSection(link.id)}
-                  className="text-[13px] font-medium uppercase tracking-[0.08em] text-zinc-500 hover:text-black"
+                  className="text-[13px] font-medium tracking-[0.04em] text-zinc-500 hover:text-black"
                 >
                   {link.label}
                 </a>
@@ -472,65 +529,83 @@ export function LandingPage() {
             <PillButton
               to="/register"
               variant="primary"
-              className="mt-6 w-full !rounded-full border border-black bg-black px-6 py-3 text-[13px] font-medium tracking-[0.06em] text-white hover:bg-zinc-800"
+              className="mt-6 w-full !rounded-full border border-black bg-black px-6 py-3 text-[13px] font-medium tracking-[0.02em] text-white"
             >
-               Submit Complaint <ChevronRight className="h-4 w-4" />
+              Submit Complaint <ChevronRight className="h-4 w-4" />
             </PillButton>
           </div>
         )}
       </header>
 
-    {/* 2. Hero */}
-      <section className="relative overflow-hidden bg-white px-6 pb-20 pt-36">
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-x-0 top-0 z-0 h-[420px] opacity-70 [-webkit-mask-image:radial-gradient(ellipse_60%_55%_at_50%_35%,black,transparent)] [mask-image:radial-gradient(ellipse_60%_55%_at_50%_35%,black,transparent)]"
-          style={{
-            backgroundImage:
-              "radial-gradient(circle, #e4e4e7 1px, transparent 1px)",
-            backgroundSize: "22px 22px",
-          }}
-        />
-
-        <div className="relative z-10 mx-auto max-w-3xl text-center">
-          <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-zinc-400">
-            AI-Powered Resolution
-          </p>
-
-          <h1 className="mt-5 font-serif text-[40px] font-normal leading-[1.15] tracking-tight text-black sm:text-[50px] md:text-[58px]">
-            Resolve complaints faster
-            <br />
-            with intelligent analysis
-          </h1>
-
-          <p className="mx-auto mt-7 max-w-xl text-[16px] font-light leading-relaxed text-zinc-500">
-            SupportNova processes every complaint through dual AI pipelines —
-            delivering faster resolutions, transparent tracking, and
-            policy-backed responses you can rely on.
-          </p>
-
-          <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
-            <PillButton
-              to="/register"
-              variant="primary"
-              className="!rounded-full px-8 py-3.5 text-[13px] font-medium uppercase tracking-[0.06em]"
+      {/* 2. Hero */}
+      <section className="relative overflow-hidden bg-white px-6 pb-24 pt-40">
+        {/* Heading wrapper -- wave is scoped to only this block */}
+        <div className="relative left-1/2 h-[560px] w-screen -translate-x-1/2 overflow-hidden">
+          <WavyBackground />
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_70%_60%_at_50%_45%,rgba(255,255,255,0.92),transparent_75%)]" />
+          <div className="relative z-10 mx-auto max-w-3xl text-center">
+            <p
+              className={`text-[11px] font-medium uppercase tracking-[0.18em] text-zinc-400 transition-all duration-700 ease-out motion-reduce:transition-none ${
+                mounted
+                  ? "translate-y-0 opacity-100"
+                  : "translate-y-3 opacity-0"
+              }`}
             >
-              Submit Complaint
-            </PillButton>
-            <PillButton
-              to="/login"
-              variant="outline"
-              className="!rounded-full px-8 py-3.5 text-[13px] font-medium uppercase tracking-[0.06em]"
+              AI-Powered Resolution
+            </p>
+
+            <h1
+              className={`mt-6 text-[42px] font-medium leading-[1.08] tracking-[-0.02em] text-black transition-all duration-700 ease-out delay-[80ms] motion-reduce:transition-none sm:text-[54px] md:text-[62px] ${
+                mounted
+                  ? "translate-y-0 opacity-100 blur-none"
+                  : "translate-y-4 opacity-0 blur-sm"
+              }`}
             >
-              Track My Complaint <ChevronRight className="h-4 w-4" />
-            </PillButton>
+              Resolve complaints faster
+              <br />
+              with intelligent analysis
+            </h1>
+
+            <p
+              className={`mx-auto mt-7 max-w-xl text-[16px] font-normal leading-relaxed text-zinc-500 transition-all duration-700 ease-out delay-150 motion-reduce:transition-none ${
+                mounted
+                  ? "translate-y-0 opacity-100"
+                  : "translate-y-3 opacity-0"
+              }`}
+            >
+              SupportNova processes every complaint through dual AI pipelines —
+              delivering faster resolutions, transparent tracking, and
+              policy-backed responses you can rely on.
+            </p>
+
+            <div
+              className={`mt-10 flex flex-col items-center justify-center gap-4 transition-all duration-700 ease-out delay-[220ms] motion-reduce:transition-none sm:flex-row ${
+                mounted
+                  ? "translate-y-0 opacity-100"
+                  : "translate-y-3 opacity-0"
+              }`}
+            >
+              <PillButton
+                to="/register"
+                variant="primary"
+                className="!rounded-full px-8 py-3.5 text-[13px] font-medium tracking-[0.02em]"
+              >
+                Submit Complaint
+              </PillButton>
+              <PillButton
+                to="/login"
+                variant="outline"
+                className="!rounded-full px-8 py-3.5 text-[13px] font-medium tracking-[0.02em]"
+              >
+                Track My Complaint <ChevronRight className="h-4 w-4" />
+              </PillButton>
+            </div>
           </div>
         </div>
-
         {/* Bento grid */}
-        <div className="relative z-10 mx-auto mt-16 grid max-w-5xl grid-cols-1 gap-5 md:grid-cols-3 md:grid-rows-2">
+        <div className="relative z-10 mx-auto mt-20 grid max-w-5xl grid-cols-1 gap-5 md:grid-cols-3 md:grid-rows-2">
           {/* Card 1: New complaint mock form -- tall, spans both rows */}
-          <div className="rounded-lg border border-zinc-200 bg-white p-7 transition-colors hover:border-zinc-300 md:col-span-1 md:row-span-2">
+          <div className="rounded-2xl border border-zinc-200 bg-white p-7 shadow-[0_1px_2px_rgba(0,0,0,0.04)] transition-all duration-300 hover:-translate-y-1 hover:border-zinc-300 hover:shadow-[0_8px_20px_-6px_rgba(0,0,0,0.10)] md:col-span-1 md:row-span-2">
             <div className="mb-6 flex items-start justify-between">
               <div>
                 <p className="text-[11px] font-medium uppercase tracking-[0.1em] text-zinc-400">
@@ -540,7 +615,7 @@ export function LandingPage() {
                   New complaint
                 </p>
               </div>
-              <span className="flex h-8 w-8 items-center justify-center rounded-md border border-zinc-200">
+              <span className="flex h-8 w-8 items-center justify-center rounded-lg border border-zinc-200 bg-zinc-50">
                 <FileText className="h-3.5 w-3.5 text-zinc-400" />
               </span>
             </div>
@@ -551,7 +626,9 @@ export function LandingPage() {
                   Category
                 </p>
                 <div className="flex h-9 items-center border-b border-zinc-200 px-0.5">
-                  <span className="text-[12px] text-zinc-500">Water supply issue</span>
+                  <span className="text-[12px] text-zinc-500">
+                    Water supply issue
+                  </span>
                 </div>
               </div>
 
@@ -569,23 +646,27 @@ export function LandingPage() {
                   Location
                 </p>
                 <div className="flex h-9 items-center border-b border-zinc-200 px-0.5">
-                  <span className="text-[12px] text-zinc-500">Block C, Sector 4</span>
+                  <span className="text-[12px] text-zinc-500">
+                    Block C, Sector 4
+                  </span>
                 </div>
               </div>
 
-              <div className="flex h-10 items-center justify-center rounded-md bg-black text-[11px] font-medium uppercase tracking-[0.06em] text-white">
+              <div className="flex h-10 items-center justify-center rounded-lg bg-black text-[11px] font-medium uppercase tracking-[0.06em] text-white shadow-[0_1px_2px_rgba(0,0,0,0.24)]">
                 Submit complaint
               </div>
             </div>
           </div>
 
           {/* Card 2: 98% resolution rate */}
-          <div className="rounded-lg border border-zinc-200 bg-white p-7 transition-colors hover:border-zinc-300 md:col-start-2 md:row-start-1">
+          <div className="rounded-2xl border border-zinc-200 bg-white p-7 shadow-[0_1px_2px_rgba(0,0,0,0.04)] transition-all duration-300 hover:-translate-y-1 hover:border-zinc-300 hover:shadow-[0_8px_20px_-6px_rgba(0,0,0,0.10)] md:col-start-2 md:row-start-1">
             <div className="mb-5 flex items-center justify-between">
               <p className="text-[11px] font-medium uppercase tracking-[0.1em] text-zinc-400">
                 This month
               </p>
-              <span className="text-[11px] font-medium text-zinc-500">↑ 4.2%</span>
+              <span className="text-[11px] font-medium text-emerald-600">
+                ↑ 4.2%
+              </span>
             </div>
             <p className="text-[42px] font-semibold leading-none tracking-tight text-black">
               98%
@@ -594,7 +675,7 @@ export function LandingPage() {
           </div>
 
           {/* Card 3: Dual pipeline -- dark card */}
-          <div className="rounded-lg border border-zinc-800 bg-black p-7 transition-colors hover:border-zinc-700 md:col-start-3 md:row-start-1">
+          <div className="rounded-2xl border border-zinc-800 bg-gradient-to-br from-zinc-900 to-black p-7 shadow-[0_1px_2px_rgba(0,0,0,0.3)] ring-1 ring-white/[0.04] transition-all duration-300 hover:-translate-y-1 hover:border-zinc-700 hover:shadow-[0_16px_40px_-16px_rgba(0,0,0,0.6)] md:col-start-3 md:row-start-1">
             <p className="text-[11px] font-medium uppercase tracking-[0.1em] text-zinc-500">
               Process
             </p>
@@ -617,22 +698,26 @@ export function LandingPage() {
           </div>
 
           {/* Card 4: 2,400+ complaints resolved */}
-          <div className="rounded-lg border border-zinc-200 bg-white p-7 transition-colors hover:border-zinc-300 md:col-start-2 md:row-start-2">
+          <div className="rounded-2xl border border-zinc-200 bg-white p-7 shadow-[0_1px_2px_rgba(0,0,0,0.04)] transition-all duration-300 hover:-translate-y-1 hover:border-zinc-300 hover:shadow-[0_8px_20px_-6px_rgba(0,0,0,0.10)] md:col-start-2 md:row-start-2">
             <p className="text-[11px] font-medium uppercase tracking-[0.1em] text-zinc-400">
               All time
             </p>
             <p className="mt-3 text-[26px] font-semibold tracking-tight text-black">
               2,400+
             </p>
-            <p className="mt-1 text-[12px] text-zinc-500">Complaints resolved</p>
+            <p className="mt-1 text-[12px] text-zinc-500">
+              Complaints resolved
+            </p>
           </div>
 
           {/* Card 5: 24/7 support -- avatar group */}
-          <div className="rounded-lg border border-zinc-200 bg-white p-7 transition-colors hover:border-zinc-300 md:col-start-3 md:row-start-2">
+          <div className="rounded-2xl border border-zinc-200 bg-white p-7 shadow-[0_1px_2px_rgba(0,0,0,0.04)] transition-all duration-300 hover:-translate-y-1 hover:border-zinc-300 hover:shadow-[0_8px_20px_-6px_rgba(0,0,0,0.10)] md:col-start-3 md:row-start-2">
             <p className="text-[11px] font-medium uppercase tracking-[0.1em] text-zinc-400">
               Always on
             </p>
-            <p className="mt-1.5 text-[15px] font-semibold text-black">24/7 support</p>
+            <p className="mt-1.5 text-[15px] font-semibold text-black">
+              24/7 support
+            </p>
             <div className="mt-4 flex items-center gap-3">
               <div className="flex -space-x-2">
                 {[12, 32, 47, 5].map((n) => (
@@ -644,7 +729,9 @@ export function LandingPage() {
                   />
                 ))}
               </div>
-              <span className="text-[11px] text-zinc-400">12 agents online</span>
+              <span className="text-[11px] text-zinc-400">
+                12 agents online
+              </span>
             </div>
           </div>
         </div>
@@ -677,7 +764,7 @@ export function LandingPage() {
               <p className="text-[56px] font-extralight leading-none tracking-tight text-black sm:text-[72px]">
                 {stat.value}
               </p>
-              <p className="mt-3 text-[14px] leading-snug text-zinc-500">
+              <p className="mt-4 text-[14px] leading-snug text-zinc-500">
                 {stat.l1}
                 <br />
                 {stat.l2}
@@ -688,7 +775,7 @@ export function LandingPage() {
       </section>
 
       {/* 4. Features */}
-      <section id="features" className="bg-white px-6 py-24">
+      <section id="features" className="bg-white px-6 py-28">
         <div className="mx-auto max-w-5xl">
           <SectionHeading
             title={
@@ -702,22 +789,22 @@ export function LandingPage() {
           />
 
           {/* Row 1: two large cards */}
-          <div className="mt-12 grid grid-cols-1 gap-6 md:grid-cols-2">
+          <div className="mt-14 grid grid-cols-1 gap-6 md:grid-cols-2">
             {FEATURES_LARGE.map((feature) => (
               <div
                 key={feature.name}
-                className="flex min-h-72 flex-col rounded-lg border border-zinc-200 bg-white p-6 transition-colors hover:border-zinc-400"
+                className="flex min-h-72 flex-col rounded-2xl border border-zinc-200 bg-white p-7 transition-all duration-300 hover:-translate-y-1 hover:border-zinc-300"
               >
-                <span className="mb-4 flex h-9 w-9 items-center justify-center rounded-lg bg-zinc-100">
+                <span className="mb-5 flex h-10 w-10 items-center justify-center rounded-xl bg-zinc-100">
                   <feature.icon
                     className="h-4.5 w-4.5 text-black"
                     strokeWidth={2}
                   />
                 </span>
-                <h3 className="text-[16px] font-semibold text-black">
+                <h3 className="text-[17px] font-semibold tracking-tight text-black">
                   {feature.name}
                 </h3>
-                <p className="mt-1.5 text-[14px] text-zinc-500">
+                <p className="mt-2 text-[14px] leading-relaxed text-zinc-500">
                   {feature.description}
                 </p>
                 <div className="mt-auto">{feature.mockup}</div>
@@ -727,14 +814,14 @@ export function LandingPage() {
 
           {/* Row 2: three small cards */}
           <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-3">
-            <div className="flex min-h-56 flex-col rounded-lg border border-zinc-200 bg-white p-6 transition-colors hover:border-zinc-400">
-              <span className="mb-4 flex h-9 w-9 items-center justify-center rounded-lg bg-zinc-100">
+            <div className="flex min-h-56 flex-col rounded-2xl border border-zinc-200 bg-white p-7 transition-all duration-300 hover:-translate-y-1 hover:border-zinc-300">
+              <span className="mb-5 flex h-10 w-10 items-center justify-center rounded-xl bg-zinc-100">
                 <Activity className="h-4.5 w-4.5 text-black" strokeWidth={2} />
               </span>
-              <h3 className="text-[16px] font-semibold text-black">
+              <h3 className="text-[17px] font-semibold tracking-tight text-black">
                 Real-Time Status Tracking
               </h3>
-              <p className="mt-1.5 text-[14px] text-zinc-500">
+              <p className="mt-2 text-[14px] leading-relaxed text-zinc-500">
                 Watch your complaint move through every stage live.
               </p>
               <div className="mt-auto">
@@ -742,18 +829,18 @@ export function LandingPage() {
               </div>
             </div>
 
-            <div className="flex min-h-56 flex-col rounded-lg border border-zinc-200 bg-white p-6 transition-colors hover:border-zinc-400">
-              <span className="mb-4 flex h-9 w-9 items-center justify-center rounded-lg bg-zinc-100">
+            <div className="flex min-h-56 flex-col rounded-2xl border border-zinc-200 bg-white p-7 transition-all duration-300 hover:-translate-y-1 hover:border-zinc-300">
+              <span className="mb-5 flex h-10 w-10 items-center justify-center rounded-xl bg-zinc-100">
                 <Users className="h-4.5 w-4.5 text-black" strokeWidth={2} />
               </span>
-              <h3 className="text-[16px] font-semibold text-black">
+              <h3 className="text-[17px] font-semibold tracking-tight text-black">
                 Role-Based Resolution
               </h3>
-              <p className="mt-1.5 text-[14px] text-zinc-500">
+              <p className="mt-2 text-[14px] leading-relaxed text-zinc-500">
                 Complaints route straight to the right specialist.
               </p>
               <div className="mt-auto">
-                <div className="mt-5 flex items-center gap-3">
+                <div className="mt-6 flex items-center gap-3">
                   <div className="flex -space-x-2">
                     {[15, 22, 8].map((n) => (
                       <img
@@ -771,17 +858,17 @@ export function LandingPage() {
               </div>
             </div>
 
-            <div className="flex min-h-56 flex-col rounded-lg border border-zinc-200 bg-white p-6 transition-colors hover:border-zinc-400">
-              <span className="mb-4 flex h-9 w-9 items-center justify-center rounded-lg bg-zinc-100">
+            <div className="flex min-h-56 flex-col rounded-2xl border border-zinc-200 bg-white p-7 transition-all duration-300 hover:-translate-y-1 hover:border-zinc-300">
+              <span className="mb-5 flex h-10 w-10 items-center justify-center rounded-xl bg-zinc-100">
                 <FileCheck className="h-4.5 w-4.5 text-black" strokeWidth={2} />
               </span>
-              <h3 className="text-[16px] font-semibold text-black">
+              <h3 className="text-[17px] font-semibold tracking-tight text-black">
                 Policy-Backed Answers
               </h3>
-              <p className="mt-1.5 text-[14px] text-zinc-500">
+              <p className="mt-2 text-[14px] leading-relaxed text-zinc-500">
                 Every resolution cites a real, verifiable policy.
               </p>
-              <div className="mt-auto space-y-2 rounded-md border border-zinc-200 bg-zinc-50 p-3">
+              <div className="mt-auto space-y-2 rounded-xl border border-zinc-200 bg-zinc-50 p-3.5">
                 <div className="h-1.5 w-5/6 rounded-full bg-zinc-200" />
                 <div className="h-1.5 w-full rounded-full bg-zinc-200" />
                 <div className="h-1.5 w-2/3 rounded-full bg-zinc-200" />
@@ -797,38 +884,38 @@ export function LandingPage() {
       {/* 5. How It Works */}
       <section
         id="how-it-works"
-        className="border-t border-zinc-200 bg-white px-6 py-24"
+        className="border-t border-zinc-200 bg-white px-6 py-28"
       >
         <div className="mx-auto max-w-5xl">
           <div className="text-center">
-            <h2 className="text-[32px] font-bold tracking-tight text-black md:text-[36px]">
+            <h2 className="text-[34px] font-semibold tracking-tight text-black md:text-[40px]">
               Get resolved in 3 simple steps
             </h2>
-            <p className="mx-auto mt-3 max-w-md text-[15px] text-zinc-500">
+            <p className="mx-auto mt-4 max-w-md text-[15px] leading-relaxed text-zinc-500">
               From the moment you submit to the moment it's resolved -- fully
               tracked, every step of the way.
             </p>
           </div>
 
-          <div className="mt-12 grid grid-cols-1 gap-6 md:grid-cols-3">
+          <div className="mt-14 grid grid-cols-1 gap-6 md:grid-cols-3">
             <div>
-              <p className="mb-2 text-[13px] text-zinc-400">Step 1</p>
-              <div className="flex h-full flex-col rounded-lg border border-zinc-200 bg-white p-6 transition-colors hover:border-zinc-400">
-                <span className="mb-4 flex h-9 w-9 items-center justify-center rounded-lg bg-zinc-100">
+              <p className="mb-2.5 text-[13px] text-zinc-400">Step 1</p>
+              <div className="flex h-full flex-col rounded-2xl border border-zinc-200 bg-white p-7 shadow-[0_1px_2px_rgba(0,0,0,0.04)] transition-all duration-300 hover:-translate-y-1 hover:border-zinc-300 ">
+                <span className="mb-5 flex h-10 w-10 items-center justify-center rounded-xl bg-zinc-100">
                   <FileText
                     className="h-4.5 w-4.5 text-black"
                     strokeWidth={2}
                   />
                 </span>
-                <h3 className="text-[16px] font-semibold text-black">
+                <h3 className="text-[17px] font-semibold tracking-tight text-black">
                   Submit Your Complaint
                 </h3>
-                <p className="mt-1.5 text-[14px] text-zinc-500">
+                <p className="mt-2 text-[14px] leading-relaxed text-zinc-500">
                   Tell us what happened through the web form, chat, email, or a
                   document upload.
                 </p>
-                <div className="mt-5 space-y-3">
-                  <div className="flex h-9 items-center justify-center gap-2 rounded-md border border-zinc-200 text-[12px] font-medium text-zinc-600">
+                <div className="mt-6 space-y-3">
+                  <div className="flex h-9 items-center justify-center gap-2 rounded-lg border border-zinc-200 text-[12px] font-medium text-zinc-600">
                     <span className="h-3.5 w-3.5 rounded-full bg-zinc-300" />{" "}
                     Continue with Google
                   </div>
@@ -836,25 +923,25 @@ export function LandingPage() {
                     <span className="h-px flex-1 bg-zinc-200" /> or{" "}
                     <span className="h-px flex-1 bg-zinc-200" />
                   </div>
-                  <div className="h-9 rounded-md border border-zinc-200 bg-zinc-50" />
+                  <div className="h-9 rounded-lg border border-zinc-200 bg-zinc-50" />
                 </div>
               </div>
             </div>
 
             <div>
-              <p className="mb-2 text-[13px] text-zinc-400">Step 2</p>
-              <div className="flex h-full flex-col rounded-lg border border-zinc-200 bg-white p-6 transition-colors hover:border-zinc-400">
-                <span className="mb-4 flex h-9 w-9 items-center justify-center rounded-lg bg-zinc-100">
+              <p className="mb-2.5 text-[13px] text-zinc-400">Step 2</p>
+              <div className="flex h-full flex-col rounded-2xl border border-zinc-200 bg-white p-7 shadow-[0_1px_2px_rgba(0,0,0,0.04)] transition-all duration-300 hover:-translate-y-1 hover:border-zinc-300 ">
+                <span className="mb-5 flex h-10 w-10 items-center justify-center rounded-xl bg-zinc-100">
                   <Cog className="h-4.5 w-4.5 text-black" strokeWidth={2} />
                 </span>
-                <h3 className="text-[16px] font-semibold text-black">
+                <h3 className="text-[17px] font-semibold tracking-tight text-black">
                   AI Analyzes & Routes
                 </h3>
-                <p className="mt-1.5 text-[14px] text-zinc-500">
+                <p className="mt-2 text-[14px] leading-relaxed text-zinc-500">
                   Dual pipelines classify severity and route it to the right
                   department automatically.
                 </p>
-                <div className="mt-5 flex items-center gap-2 rounded-full border border-zinc-200 bg-zinc-50 px-3 py-2 text-[12px] font-medium text-zinc-600">
+                <div className="mt-6 flex items-center gap-2 rounded-full border border-zinc-200 bg-zinc-50 px-3 py-2 text-[12px] font-medium text-zinc-600">
                   <Cog className="h-3.5 w-3.5 animate-spin text-zinc-400" />
                   Analyzing complaint...
                 </div>
@@ -862,18 +949,18 @@ export function LandingPage() {
             </div>
 
             <div>
-              <p className="mb-2 text-[13px] text-zinc-400">Step 3</p>
-              <div className="flex h-full flex-col rounded-lg border border-zinc-200 bg-white p-6 transition-colors hover:border-zinc-400">
-                <span className="mb-4 flex h-9 w-9 items-center justify-center rounded-lg bg-zinc-100">
+              <p className="mb-2.5 text-[13px] text-zinc-400">Step 3</p>
+              <div className="flex h-full flex-col rounded-2xl border border-zinc-200 bg-white p-7 shadow-[0_1px_2px_rgba(0,0,0,0.04)] transition-all duration-300 hover:-translate-y-1 hover:border-zinc-300 ">
+                <span className="mb-5 flex h-10 w-10 items-center justify-center rounded-xl bg-zinc-100">
                   <CheckCircle2
                     className="h-4.5 w-4.5 text-black"
                     strokeWidth={2}
                   />
                 </span>
-                <h3 className="text-[16px] font-semibold text-black">
+                <h3 className="text-[17px] font-semibold tracking-tight text-black">
                   Agent Resolves & Updates
                 </h3>
-                <p className="mt-1.5 text-[14px] text-zinc-500">
+                <p className="mt-2 text-[14px] leading-relaxed text-zinc-500">
                   A specialist resolves your case and keeps you updated at every
                   step.
                 </p>
@@ -887,119 +974,15 @@ export function LandingPage() {
       {/* 6. Pricing */}
       <section
         id="pricing"
-        className="border-t border-zinc-200 bg-white px-6 py-24"
+        className="border-t border-zinc-200 bg-white px-6 py-28"
       >
         <div className="mx-auto max-w-5xl">
-          <div className="text-center">
-            <h2 className="text-[32px] font-bold tracking-tight text-black md:text-[36px]">
-              Simple, transparent pricing
-            </h2>
-            <p className="mx-auto mt-3 max-w-md text-[15px] text-zinc-500">
-              Choose the plan that fits your complaint volume -- upgrade any
-              time as you grow.
-            </p>
-
-            <div className="mt-6 inline-flex items-center gap-3 rounded-full border border-zinc-200 p-1">
-              <button
-                onClick={() => setBilling("monthly")}
-                className={`rounded-full px-4 py-1.5 text-[13px] font-medium transition-colors ${
-                  billing === "monthly"
-                    ? "bg-black text-white"
-                    : "text-zinc-500"
-                }`}
-              >
-                Monthly
-              </button>
-              <button
-                onClick={() => setBilling("yearly")}
-                className={`flex items-center gap-1.5 rounded-full px-4 py-1.5 text-[13px] font-medium transition-colors ${
-                  billing === "yearly" ? "bg-black text-white" : "text-zinc-500"
-                }`}
-              >
-                Yearly
-                <span className="rounded-full bg-emerald-100 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-700">
-                  Save 20%
-                </span>
-              </button>
-            </div>
-          </div>
-
-          <div className="mt-12 grid grid-cols-1 gap-6 md:grid-cols-3">
-            {PLANS.map((plan) => {
-              const price =
-                plan.monthly === null
-                  ? null
-                  : billing === "monthly"
-                    ? plan.monthly
-                    : plan.yearly;
-              return (
-                <div
-                  key={plan.key}
-                  className={`relative flex flex-col rounded-lg border p-6 transition-colors ${
-                    plan.highlighted
-                      ? "border-black bg-zinc-50"
-                      : "border-zinc-200 bg-white hover:border-zinc-400"
-                  }`}
-                >
-                  {plan.highlighted && (
-                    <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-black px-3 py-1 text-[11px] font-semibold text-white">
-                      Most Popular
-                    </span>
-                  )}
-                  <h3 className="text-[17px] font-semibold text-black">
-                    {plan.name}
-                  </h3>
-                  <p className="mt-1 text-[13px] text-zinc-500">
-                    {plan.tagline}
-                  </p>
-
-                  <div className="mt-5">
-                    {price === null ? (
-                      <p className="text-[32px] font-extrabold tracking-tight text-black">
-                        Custom
-                      </p>
-                    ) : (
-                      <p className="text-[32px] font-extrabold tracking-tight text-black">
-                        ${price}
-                        <span className="text-[14px] font-medium text-zinc-400">
-                          /mo
-                        </span>
-                      </p>
-                    )}
-                  </div>
-
-                  <ul className="mt-5 flex-1 space-y-2.5">
-                    {plan.features.map((f) => (
-                      <li
-                        key={f}
-                        className="flex items-start gap-2 text-[13px] text-zinc-600"
-                      >
-                        <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-black" />
-                        {f}
-                      </li>
-                    ))}
-                  </ul>
-
-                  <PillButton
-                    to="/register"
-                    variant={plan.highlighted ? "primary" : "outline"}
-                    className="mt-6 w-full"
-                  >
-                    {plan.key === "enterprise"
-                      ? "Contact Sales"
-                      : "Get Started"}
-                  </PillButton>
-                </div>
-              );
-            })}
-          </div>
-
-          <div className="mt-8 flex flex-col items-center justify-between gap-4 rounded-lg bg-black px-6 py-6 sm:flex-row">
+          <div className="mt-8 flex flex-col items-center justify-between gap-5 rounded-2xl bg-gradient-to-br from-zinc-900 to-black px-7 py-7 shadow-[0_20px_50px_-20px_rgba(0,0,0,0.45)] ring-1 ring-white/[0.04] sm:flex-row">
             <div>
               <p className="text-[15px] font-semibold text-white">
                 Need a custom solution?
               </p>
-              <p className="mt-0.5 text-[13px] text-zinc-400">
+              <p className="mt-1 text-[13px] text-zinc-400">
                 We tailor plans to match your complaint volume and scale.
               </p>
             </div>
@@ -1016,28 +999,30 @@ export function LandingPage() {
       </section>
 
       {/* 7. Testimonials */}
-      <section className="border-t border-zinc-200 bg-white px-6 py-24">
+      <section className="border-t border-zinc-200 bg-white px-6 py-28">
         <div className="mx-auto max-w-5xl">
           <SectionHeading
             title="What Travelers Say"
             subtext="Real feedback from travelers who got their complaints resolved fast."
           />
 
-          <div className="mt-12 grid grid-cols-1 gap-6 md:grid-cols-3">
+          <div className="mt-14 grid grid-cols-1 gap-6 md:grid-cols-3">
             {TESTIMONIALS.map((t, i) => (
               <div
                 key={t.name}
-                className={`rounded-lg border bg-white p-6 transition-colors ${
-                  activeTestimonial === i ? "border-black" : "border-zinc-200"
+                className={`rounded-2xl border bg-white p-7 ${
+                  activeTestimonial === i
+                    ? "border-black"
+                    : "border-zinc-200 hover:border-zinc-300 "
                 }`}
               >
-                <span className="mb-4 flex h-9 w-9 items-center justify-center rounded-lg bg-zinc-100">
+                <span className="mb-5 flex h-10 w-10 items-center justify-center rounded-xl bg-zinc-100">
                   <Quote className="h-4 w-4 text-black" />
                 </span>
                 <p className="text-[14px] leading-relaxed text-zinc-700">
                   {t.quote}
                 </p>
-                <p className="mt-4 text-[14px] font-semibold text-black">
+                <p className="mt-5 text-[14px] font-semibold text-black">
                   {t.name}
                 </p>
                 <p className="text-[13px] text-zinc-400">{t.role}</p>
@@ -1045,17 +1030,17 @@ export function LandingPage() {
             ))}
           </div>
 
-          <div className="mt-8 flex items-center justify-between">
+          <div className="mt-10 flex items-center justify-between">
             <div className="flex gap-2">
               {TESTIMONIALS.map((_, i) => (
                 <button
                   key={i}
                   aria-label={`Show testimonial ${i + 1}`}
                   onClick={() => setActiveTestimonial(i)}
-                  className={`h-1.5 rounded-full transition-all ${
+                  className={`h-1.5 rounded-full${
                     activeTestimonial === i
                       ? "w-6 bg-black"
-                      : "w-1.5 bg-zinc-300"
+                      : "w-1.5 bg-zinc-300 hover:bg-zinc-400"
                   }`}
                 />
               ))}
@@ -1068,7 +1053,7 @@ export function LandingPage() {
                     (i) => (i - 1 + TESTIMONIALS.length) % TESTIMONIALS.length,
                   )
                 }
-                className="flex h-8 w-8 items-center justify-center rounded-full bg-black text-white"
+                className="flex h-8 w-8 items-center justify-center rounded-full bg-black text-white shadow-[0_1px_2px_rgba(0,0,0,0.24)] transition-all duration-200"
               >
                 <ChevronLeft className="h-4 w-4" />
               </button>
@@ -1077,7 +1062,7 @@ export function LandingPage() {
                 onClick={() =>
                   setActiveTestimonial((i) => (i + 1) % TESTIMONIALS.length)
                 }
-                className="flex h-8 w-8 items-center justify-center rounded-full bg-black text-white"
+                className="flex h-8 w-8 items-center justify-center rounded-full bg-black text-white shadow-[0_1px_2px_rgba(0,0,0,0.24)] transition-all duration-200 "
               >
                 <ChevronRight className="h-4 w-4" />
               </button>
@@ -1087,16 +1072,20 @@ export function LandingPage() {
       </section>
 
       {/* 8. CTA Banner */}
-      <section className="bg-black px-6 py-24 text-center">
-        <div className="mx-auto max-w-2xl">
-          <h2 className="text-[32px] font-bold leading-tight tracking-tight text-white md:text-[40px]">
+      <section className="relative overflow-hidden bg-gradient-to-b from-zinc-900 to-black px-6 py-28 text-center">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute left-1/2 top-0 h-[360px] w-[720px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-white/[0.06] blur-3xl"
+        />
+        <div className="relative mx-auto max-w-2xl">
+          <h2 className="text-[34px] font-semibold leading-tight tracking-tight text-white md:text-[42px]">
             Ready to resolve your complaint?
           </h2>
-          <p className="mt-4 text-[15px] text-zinc-400">
+          <p className="mt-4 text-[15px] leading-relaxed text-zinc-400">
             Join thousands of travelers who get faster, transparent,
             policy-backed resolutions.
           </p>
-          <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
+          <div className="mt-9 flex flex-col items-center justify-center gap-4 sm:flex-row">
             <PillButton
               to="/register"
               variant="inverse"
@@ -1126,7 +1115,7 @@ export function LandingPage() {
           <div className="grid grid-cols-1 gap-10 border-b border-zinc-200 pb-12 md:grid-cols-2">
             <div>
               <Logo />
-              <p className="mt-3 max-w-[260px] text-[13px] text-zinc-500">
+              <p className="mt-3.5 max-w-[260px] text-[13px] leading-relaxed text-zinc-500">
                 AI-powered complaint resolution for TravelNova customers.
               </p>
               {subscribed ? (
@@ -1144,11 +1133,11 @@ export function LandingPage() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="Your email"
-                    className="h-9 min-w-0 flex-1 rounded-md border border-zinc-200 px-3 text-[13px] focus:border-zinc-400 focus:outline-none"
+                    className="h-9 min-w-0 flex-1 rounded-lg border border-zinc-200 px-3 text-[13px] transition-colors focus:border-zinc-400 focus:outline-none focus:ring-2 focus:ring-black/5"
                   />
                   <button
                     type="submit"
-                    className="h-9 shrink-0 rounded-md bg-black px-3 text-[13px] font-medium text-white hover:bg-zinc-800"
+                    className="h-9 shrink-0 rounded-lg bg-black px-3 text-[13px] font-medium text-white transition-all duration-200 hover:bg-zinc-800 active:scale-[0.98]"
                   >
                     Subscribe
                   </button>
@@ -1190,27 +1179,39 @@ export function LandingPage() {
           {/* Tier 2 */}
           <div className="grid grid-cols-2 gap-8 pt-12 sm:grid-cols-4">
             <div>
-              <p className="mb-3 text-[13px] font-semibold text-black">
+              <p className="mb-3.5 text-[13px] font-semibold text-black">
                 Products
               </p>
-              <ul className="space-y-2 text-[13px] text-zinc-500">
+              <ul className="space-y-2.5 text-[13px] text-zinc-500">
                 <li>
-                  <Link to="/register" className="hover:text-black">
+                  <Link
+                    to="/register"
+                    className="transition-colors hover:text-black"
+                  >
                     Complaint Portal
                   </Link>
                 </li>
                 <li>
-                  <Link to="/login" className="hover:text-black">
+                  <Link
+                    to="/login"
+                    className="transition-colors hover:text-black"
+                  >
                     Track Status
                   </Link>
                 </li>
                 <li>
-                  <Link to="/login" className="hover:text-black">
+                  <Link
+                    to="/login"
+                    className="transition-colors hover:text-black"
+                  >
                     Agent Login
                   </Link>
                 </li>
                 <li>
-                  <Link to="/login" className="hover:text-black">
+                  <Link
+                    to="/login"
+                    className="transition-colors hover:text-black"
+                  >
                     Admin Panel
                   </Link>
                 </li>
@@ -1218,27 +1219,27 @@ export function LandingPage() {
             </div>
 
             <div>
-              <p className="mb-3 text-[13px] font-semibold text-black">
+              <p className="mb-3.5 text-[13px] font-semibold text-black">
                 Support
               </p>
-              <ul className="space-y-2 text-[13px] text-zinc-500">
+              <ul className="space-y-2.5 text-[13px] text-zinc-500">
                 <li>
-                  <a href="#" className="hover:text-black">
+                  <a href="#" className="transition-colors hover:text-black">
                     FAQ
                   </a>
                 </li>
                 <li>
-                  <a href="#" className="hover:text-black">
+                  <a href="#" className="transition-colors hover:text-black">
                     Contact Us
                   </a>
                 </li>
                 <li>
-                  <a href="#" className="hover:text-black">
+                  <a href="#" className="transition-colors hover:text-black">
                     Privacy Policy
                   </a>
                 </li>
                 <li>
-                  <a href="#" className="hover:text-black">
+                  <a href="#" className="transition-colors hover:text-black">
                     Terms
                   </a>
                 </li>
@@ -1246,22 +1247,22 @@ export function LandingPage() {
             </div>
 
             <div>
-              <p className="mb-3 text-[13px] font-semibold text-black">
+              <p className="mb-3.5 text-[13px] font-semibold text-black">
                 Company
               </p>
-              <ul className="space-y-2 text-[13px] text-zinc-500">
+              <ul className="space-y-2.5 text-[13px] text-zinc-500">
                 <li>
-                  <a href="#" className="hover:text-black">
+                  <a href="#" className="transition-colors hover:text-black">
                     About
                   </a>
                 </li>
                 <li>
-                  <a href="#" className="hover:text-black">
+                  <a href="#" className="transition-colors hover:text-black">
                     Careers
                   </a>
                 </li>
                 <li>
-                  <a href="#" className="hover:text-black">
+                  <a href="#" className="transition-colors hover:text-black">
                     Blog
                   </a>
                 </li>
@@ -1269,7 +1270,7 @@ export function LandingPage() {
             </div>
 
             <div>
-              <p className="mb-3 text-[13px] font-semibold text-black">
+              <p className="mb-3.5 text-[13px] font-semibold text-black">
                 Social
               </p>
               <div className="flex gap-2">
@@ -1285,10 +1286,10 @@ export function LandingPage() {
         <div className="mx-auto mt-8 flex max-w-5xl flex-col items-center justify-between gap-3 border-t border-zinc-200 pt-8 text-xs text-zinc-400 sm:flex-row">
           <p>© 2026 TravelNova. All rights reserved.</p>
           <div className="flex gap-4">
-            <a href="#" className="hover:text-black">
+            <a href="#" className="transition-colors hover:text-black">
               Terms of Service
             </a>
-            <a href="#" className="hover:text-black">
+            <a href="#" className="transition-colors hover:text-black">
               Privacy Policy
             </a>
           </div>

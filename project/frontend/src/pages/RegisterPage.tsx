@@ -1,4 +1,4 @@
-import { AlertCircle, Check, Eye, EyeOff, MessageSquareCode, X } from 'lucide-react'
+import { AlertCircle, Check, Eye, EyeOff, X } from 'lucide-react'
 import { useMemo, useRef, useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 
@@ -27,11 +27,8 @@ function TextureBackground() {
 
 function LogoLockup() {
   return (
-    <div className="flex items-center justify-center gap-2.5">
-      <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#0A0A0A] text-white">
-        <MessageSquareCode className="h-5 w-5" strokeWidth={2.25} />
-      </span>
-      <span className="text-lg font-bold tracking-tight text-[#0A0A0A]">SupportNova</span>
+    <div className="flex items-center justify-center">
+      <img src="/logo.png" alt="SupportNova" width={133} height={48} className="h-10 w-auto object-contain sm:h-12" />
     </div>
   )
 }
