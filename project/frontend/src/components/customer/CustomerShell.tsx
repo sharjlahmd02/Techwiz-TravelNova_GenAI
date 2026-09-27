@@ -35,13 +35,13 @@ export function CustomerShell({ title, actions, children }: { title: string; act
   }
 
   return (
-    <div className="flex min-h-screen bg-[#FAFAFA]">
+    <div className="flex h-screen overflow-hidden bg-[#FAFAFA]">
       <aside className="flex w-64 flex-shrink-0 flex-col border-r border-zinc-200 bg-white">
-        <div className="flex h-16 items-center px-5">
+        <div className="flex h-16 flex-shrink-0 items-center px-5">
           <img src="/logo.png" alt="SupportNova" width={122} height={44} className="h-11 w-auto object-contain" />
         </div>
 
-        <nav className="flex-1 px-3 py-3">
+        <nav className="flex-1 overflow-y-auto px-3 py-3">
           {NAV_ITEMS.map((item) => (
             <NavLink
               key={item.to}
@@ -60,7 +60,7 @@ export function CustomerShell({ title, actions, children }: { title: string; act
         </nav>
 
         {user && (
-          <div className="border-t border-zinc-100 p-4">
+          <div className="flex-shrink-0 border-t border-zinc-100 p-4">
             <div className="flex items-center gap-2.5">
               <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-zinc-100 text-xs font-semibold text-zinc-700">
                 {initialsOf(user.full_name)}
