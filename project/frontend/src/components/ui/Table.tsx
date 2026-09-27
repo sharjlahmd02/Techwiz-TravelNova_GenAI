@@ -42,8 +42,14 @@ export function Table<T>({ columns, rows, keyFor, onRowClick, isP0, emptyMessage
               key={keyFor(row)}
               onClick={() => onRowClick?.(row)}
               className={`h-12 border-b border-[--zinc-100] last:border-b-0 text-sm text-[--text-primary] ${
-                onRowClick ? 'cursor-pointer hover:bg-[--zinc-50]' : ''
-              } ${isP0?.(row) ? 'border-l-[3px] border-l-p0-dot' : ''}`}
+                onRowClick ? 'cursor-pointer' : ''
+              } ${
+                isP0?.(row)
+                  ? `border-l-[3px] border-l-p0-dot ${onRowClick ? 'hover:bg-p0-bg' : ''}`
+                  : onRowClick
+                    ? 'hover:bg-[--zinc-50]'
+                    : ''
+              }`}
             >
               {columns.map((col) => (
                 <td key={col.header} className={`px-4 ${col.className ?? ''}`}>

@@ -110,7 +110,9 @@ export function ComplaintDetailPage() {
                 <div key={m.id} className={`flex ${m.sender === 'customer' ? 'justify-end' : 'justify-start'}`}>
                   <div
                     className={`max-w-[80%] rounded-md px-3 py-2 text-sm ${
-                      m.sender === 'customer' ? 'bg-accent-light text-[--text-primary]' : 'bg-[--zinc-100] text-[--text-primary]'
+                      m.sender === 'customer'
+                        ? 'bg-black text-white'
+                        : 'border border-[--border] bg-[--surface] text-[--text-primary]'
                     }`}
                   >
                     {m.message}
@@ -153,7 +155,7 @@ export function ComplaintDetailPage() {
             <ol className="space-y-4">
               {statusInfo?.timeline.map((entry, i) => (
                 <li key={i} className="relative pl-5">
-                  <span className="absolute left-0 top-1.5 h-2 w-2 rounded-full bg-accent" />
+                  <span className="absolute left-0 top-1.5 h-2 w-2 rounded-full bg-black" />
                   <p className="text-sm font-medium capitalize text-[--text-primary]">{entry.action.replace('_', ' ')}</p>
                   <p className="text-xs text-[--text-muted]">{new Date(entry.created_at).toLocaleString()}</p>
                 </li>

@@ -1,10 +1,20 @@
 import type { ReactNode } from 'react'
 
-export function StatCard({ label, value, delta }: { label: string; value: ReactNode; delta?: string }) {
+export function StatCard({
+  label,
+  value,
+  delta,
+  size = 'md',
+}: {
+  label: string
+  value: ReactNode
+  delta?: string
+  size?: 'md' | 'lg'
+}) {
   return (
-    <div className="rounded-lg border border-[--border] bg-[--surface] p-5 shadow-sm">
+    <div className="rounded-lg border border-[--border] bg-[--surface] p-5 transition-colors hover:border-[--border-strong]">
       <p className="text-xs font-medium text-[--text-secondary]">{label}</p>
-      <p className="mt-1 text-2xl font-bold text-[--text-primary]">{value}</p>
+      <p className={`mt-1 text-[--text-primary] ${size === 'lg' ? 'text-4xl' : 'text-3xl'}`}>{value}</p>
       {delta && <p className="mt-1 text-xs text-[--text-muted]">{delta}</p>}
     </div>
   )

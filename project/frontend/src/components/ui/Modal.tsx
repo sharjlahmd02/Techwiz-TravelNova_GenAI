@@ -1,3 +1,4 @@
+import { X } from 'lucide-react'
 import type { ReactNode } from 'react'
 
 export function Modal({
@@ -18,19 +19,19 @@ export function Modal({
   if (!open) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
       <div
-        className="max-h-[90vh] w-full overflow-y-auto rounded-lg border border-[--border] bg-[--surface] p-6 shadow-lg"
+        className="max-h-[90vh] w-full overflow-y-auto rounded-lg border border-[--border] bg-[--surface] p-6 shadow-modal"
         style={{ maxWidth: width }}
       >
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-xl font-semibold text-[--text-primary]">{title}</h2>
+          <h2 className="text-xl text-[--text-primary]">{title}</h2>
           <button
             onClick={onClose}
             aria-label="Close"
-            className="flex h-7 w-7 items-center justify-center rounded-sm text-[--text-secondary] hover:bg-[--zinc-100] hover:text-[--text-primary]"
+            className="flex h-7 w-7 items-center justify-center rounded-md text-[--text-secondary] hover:bg-[--zinc-100] hover:text-[--text-primary]"
           >
-            ✕
+            <X className="h-4 w-4" />
           </button>
         </div>
         <div>{children}</div>

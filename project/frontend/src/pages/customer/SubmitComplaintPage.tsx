@@ -1,4 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod'
+import { Check, MessageSquareCode } from 'lucide-react'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useNavigate } from 'react-router-dom'
@@ -58,8 +59,13 @@ export function SubmitComplaintPage() {
 
   return (
     <div className="min-h-screen bg-[--bg]">
-      <header className="border-b border-[--border] bg-[--surface] px-6 py-4">
-        <span className="text-lg font-semibold text-[--text-primary]">SupportNova</span>
+      <header className="sticky top-0 z-10 border-b border-[--border] bg-white/90 px-6 py-4 backdrop-blur-sm">
+        <div className="flex items-center gap-2">
+          <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-black text-white">
+            <MessageSquareCode className="h-4 w-4" strokeWidth={2.5} />
+          </span>
+          <span className="text-[15px] font-bold text-[--text-primary]">SupportNova</span>
+        </div>
       </header>
 
       <div className="mx-auto max-w-[640px] px-4 py-10">
@@ -68,7 +74,7 @@ export function SubmitComplaintPage() {
             <div key={label} className="flex items-center gap-3">
               <div className="flex flex-col items-center gap-1">
                 <div
-                  className={`h-2.5 w-2.5 rounded-full ${i <= step ? 'bg-accent' : 'bg-[--zinc-300]'}`}
+                  className={`h-2.5 w-2.5 rounded-full ${i <= step ? 'bg-black' : 'bg-[--zinc-300]'}`}
                 />
                 <span className={`text-xs ${i === step ? 'font-medium text-[--text-primary]' : 'text-[--text-muted]'}`}>
                   {label}
@@ -81,7 +87,7 @@ export function SubmitComplaintPage() {
 
         {step === 0 && (
           <div className="rounded-lg border border-[--border] bg-[--surface] p-6">
-            <h2 className="mb-4 text-xl font-semibold text-[--text-primary]">What's this about?</h2>
+            <h2 className="mb-4 text-xl text-[--text-primary]">What's this about?</h2>
             <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-3">
               {PRODUCT_TYPES.map((type) => (
                 <button
@@ -90,8 +96,8 @@ export function SubmitComplaintPage() {
                   onClick={() => setValue('product_type', type)}
                   className={`rounded-md border px-3 py-3 text-sm font-medium transition-colors ${
                     values.product_type === type
-                      ? 'border-accent bg-accent-light text-accent'
-                      : 'border-[--border] text-[--text-primary] hover:bg-[--zinc-50]'
+                      ? 'border-black bg-[--zinc-50] text-[--text-primary]'
+                      : 'border-[--border] text-[--text-primary] hover:border-[--border-strong]'
                   }`}
                 >
                   {type}
@@ -131,7 +137,7 @@ export function SubmitComplaintPage() {
 
         {step === 1 && (
           <div className="rounded-lg border border-[--border] bg-[--surface] p-6">
-            <h2 className="mb-4 text-xl font-semibold text-[--text-primary]">Review your complaint</h2>
+            <h2 className="mb-4 text-xl text-[--text-primary]">Review your complaint</h2>
             <dl className="space-y-3 text-sm">
               <div>
                 <dt className="text-[--text-secondary]">Service</dt>
@@ -156,7 +162,7 @@ export function SubmitComplaintPage() {
             {submitError && <p className="mt-4 text-sm text-p0-text">{submitError}</p>}
 
             <div className="mt-6 flex items-center justify-between">
-              <button onClick={() => setStep(0)} className="text-sm text-accent hover:text-accent-hover">
+              <button onClick={() => setStep(0)} className="text-sm text-link hover:text-link-hover">
                 ← Looks wrong? Go back
               </button>
             </div>
@@ -168,10 +174,10 @@ export function SubmitComplaintPage() {
 
         {step === 2 && result && (
           <div className="rounded-lg border border-[--border] bg-[--surface] p-8 text-center">
-            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-[--status-green-bg] text-2xl text-[--status-green]">
-              ✓
+            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-[--status-green-bg] text-[--status-green]">
+              <Check className="h-6 w-6" strokeWidth={2.5} />
             </div>
-            <h2 className="text-xl font-semibold text-[--text-primary]">Your complaint has been submitted</h2>
+            <h2 className="text-xl text-[--text-primary]">Your complaint has been submitted</h2>
             <p className="mt-3 font-mono text-lg text-[--text-primary]">{result.complaint_id}</p>
             <p className="mt-2 text-sm text-[--text-secondary]">
               We're reviewing it now and will follow up shortly with next steps.

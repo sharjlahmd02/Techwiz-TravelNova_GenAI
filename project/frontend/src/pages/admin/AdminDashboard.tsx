@@ -1,10 +1,17 @@
 import { useEffect, useState } from 'react'
-import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
+import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { AppShell } from '../../components/layout/AppShell'
 import { StatCard, Panel } from '../../components/ui/Card'
 import { Button } from '../../components/ui/Button'
 import { adminApi } from '../../services/admin'
 import type { AdminAnalytics } from '../../types/admin'
+
+const PRIORITY_DOT: Record<string, string> = {
+  P0: 'var(--p0-dot)',
+  P1: 'var(--p1-dot)',
+  P2: 'var(--p2-dot)',
+  P3: 'var(--p3-dot)',
+}
 
 function toChartData(record: Record<string, number>) {
   return Object.entries(record).map(([name, value]) => ({ name, value }))
@@ -68,7 +75,7 @@ export function AdminDashboard() {
               <XAxis type="number" tick={{ fontSize: 11 }} />
               <YAxis type="category" dataKey="name" tick={{ fontSize: 10 }} width={140} />
               <Tooltip />
-              <Bar dataKey="value" fill="#2563EB" radius={[0, 4, 4, 0]} />
+              <Bar dataKey="value" fill="var(--zinc-800)" radius={[0, 4, 4, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </Panel>
@@ -80,7 +87,11 @@ export function AdminDashboard() {
               <XAxis dataKey="name" tick={{ fontSize: 11 }} />
               <YAxis tick={{ fontSize: 11 }} />
               <Tooltip />
-              <Bar dataKey="value" fill="#EF4444" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="value" radius={[4, 4, 0, 0]}>
+                {toChartData(analytics.priority_distribution).map((entry) => (
+                  <Cell key={entry.name} fill={PRIORITY_DOT[entry.name] ?? 'var(--zinc-400)'} />
+                ))}
+              </Bar>
             </BarChart>
           </ResponsiveContainer>
         </Panel>

@@ -1,9 +1,12 @@
 import { zodResolver } from '@hookform/resolvers/zod'
+import { AlertCircle, MessageSquareCode } from 'lucide-react'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { Link, useNavigate } from 'react-router-dom'
 import { z } from 'zod'
 
+import { Button } from '../components/ui/Button'
+import { FieldError, Input, Label, PasswordInput } from '../components/ui/Input'
 import { useAuthStore } from '../store/authStore'
 import { api } from '../services/api'
 import { ROLE_HOME, type TokenResponse } from '../types/auth'
@@ -39,75 +42,65 @@ export function LoginPage() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-[--bg] px-4">
-      <div className="w-full max-w-[400px] rounded-lg border border-[--border] bg-[--surface] p-10 shadow-md">
+      <div className="w-full max-w-[420px] rounded-lg border border-[--border] bg-[--surface] p-10 shadow-modal">
         <div className="text-center">
-          <h1 className="text-xl font-semibold text-[--text-primary]">SupportNova</h1>
-          <p className="mt-1 text-sm text-[--text-secondary]">
-            Complaint management for TravelNova
-          </p>
+          <div className="mb-3 flex items-center justify-center gap-2">
+            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-black text-white">
+              <MessageSquareCode className="h-4 w-4" strokeWidth={2.5} />
+            </span>
+            <span className="text-[15px] font-bold tracking-tight text-[--text-primary]">SupportNova</span>
+          </div>
+          <p className="text-sm text-[--text-muted]">Complaint management for TravelNova</p>
         </div>
 
-        <h2 className="mt-8 text-xl font-semibold text-[--text-primary]">Sign in</h2>
+        <h1 className="mt-8 text-2xl text-[--text-primary]">Welcome back</h1>
+
+        {serverError && (
+          <div
+            role="alert"
+            className="mt-4 flex items-start gap-2 rounded-md border border-[--status-red] bg-[--status-red-bg] px-3 py-2.5 text-sm text-[--status-red]"
+          >
+            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+            {serverError}
+          </div>
+        )}
 
         <form className="mt-6 flex flex-col gap-4" onSubmit={handleSubmit(onSubmit)} noValidate>
           <div>
-            <label htmlFor="email" className="mb-1.5 block text-sm font-medium text-[--text-primary]">
-              Email
-            </label>
-            <input
+            <Label htmlFor="email">Email</Label>
+            <Input
               id="email"
               type="email"
               autoComplete="email"
-              className="h-9 w-full rounded-md border border-[--border] bg-[--surface] px-3 text-sm text-[--text-primary] focus:border-[--accent] focus:outline-none focus:ring-[3px] focus:ring-[--accent]/20"
+              error={!!errors.email}
               aria-invalid={!!errors.email}
               aria-describedby={errors.email ? 'email-error' : undefined}
               {...register('email')}
             />
-            {errors.email && (
-              <p id="email-error" role="alert" className="mt-1 text-xs text-[--p0-text]">
-                {errors.email.message}
-              </p>
-            )}
+            {errors.email && <FieldError message={errors.email.message} />}
           </div>
 
           <div>
-            <label htmlFor="password" className="mb-1.5 block text-sm font-medium text-[--text-primary]">
-              Password
-            </label>
-            <input
+            <Label htmlFor="password">Password</Label>
+            <PasswordInput
               id="password"
-              type="password"
               autoComplete="current-password"
-              className="h-9 w-full rounded-md border border-[--border] bg-[--surface] px-3 text-sm text-[--text-primary] focus:border-[--accent] focus:outline-none focus:ring-[3px] focus:ring-[--accent]/20"
+              error={!!errors.password}
               aria-invalid={!!errors.password}
               aria-describedby={errors.password ? 'password-error' : undefined}
               {...register('password')}
             />
-            {errors.password && (
-              <p id="password-error" role="alert" className="mt-1 text-xs text-[--p0-text]">
-                {errors.password.message}
-              </p>
-            )}
+            {errors.password && <FieldError message={errors.password.message} />}
           </div>
 
-          {serverError && (
-            <p role="alert" className="text-xs text-[--p0-text]">
-              {serverError}
-            </p>
-          )}
-
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="mt-2 h-9 w-full rounded-md bg-[--accent] text-sm font-medium text-white transition-colors hover:bg-[--accent-hover] disabled:opacity-40"
-          >
-            {isSubmitting ? 'Signing in…' : 'Sign in'}
-          </button>
+          <Button type="submit" loading={isSubmitting} className="mt-2 w-full">
+            Sign in
+          </Button>
         </form>
 
         <p className="mt-6 text-center text-sm text-[--text-secondary]">
           New customer?{' '}
-          <Link to="/register" className="text-[--accent] hover:text-[--accent-hover]">
+          <Link to="/register" className="font-medium text-link hover:text-link-hover">
             Create an account →
           </Link>
         </p>

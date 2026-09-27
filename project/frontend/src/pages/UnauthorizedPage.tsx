@@ -8,11 +8,11 @@ export function UnauthorizedPage() {
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center gap-3 bg-[--bg] px-4 text-center">
-      <h1 className="text-2xl font-bold text-[--text-primary]">Unauthorized</h1>
+      <h1 className="text-2xl text-[--text-primary]">Unauthorized</h1>
       <p className="max-w-sm text-sm text-[--text-secondary]">
         You don't have permission to view this page.
       </p>
-      <Link to={homeLink} className="mt-2 text-sm font-medium text-accent hover:text-accent-hover">
+      <Link to={homeLink} className="mt-2 text-sm font-medium text-link hover:text-link-hover">
         Go to your dashboard →
       </Link>
     </div>
