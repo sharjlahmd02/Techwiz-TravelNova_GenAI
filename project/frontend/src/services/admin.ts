@@ -64,6 +64,12 @@ export const adminApi = {
   export: (format: 'csv' | 'json' | 'pdf') =>
     api.get<Blob>('/api/admin/export', { params: { format }, responseType: 'blob' }),
 
+  exportComparisonReport: (format: 'csv' | 'json' | 'pdf') =>
+    api.get<Blob>('/api/admin/export/comparison-report', { params: { format }, responseType: 'blob' }),
+
+  exportIntelligenceReport: (format: 'csv' | 'json' | 'pdf') =>
+    api.get<Blob>('/api/admin/export/intelligence-report', { params: { format }, responseType: 'blob' }),
+
   // Import
   importComplaints: (complaints: Record<string, unknown>[]) =>
     api.post('/api/admin/import-complaints', { complaints }),

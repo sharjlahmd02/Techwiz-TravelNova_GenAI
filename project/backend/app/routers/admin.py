@@ -34,7 +34,17 @@ from app.schemas.admin import (
     SubcategoryResponse,
 )
 from app.services.admin_service import AdminService
-from app.services.export_service import export_csv, export_json, export_pdf
+from app.services.export_service import (
+    export_comparison_report_csv,
+    export_comparison_report_json,
+    export_comparison_report_pdf,
+    export_csv,
+    export_intelligence_report_csv,
+    export_intelligence_report_json,
+    export_intelligence_report_pdf,
+    export_json,
+    export_pdf,
+)
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
 _require_admin = require_role("admin")
@@ -216,6 +226,59 @@ async def export_data(
     else:
         content = await export_pdf(db, department_id, date_from, date_to)
         media_type, filename = "application/pdf", "complaints.pdf"
+
+    return Response(
+        content=content,
+        media_type=media_type,
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
+# SRS deliverable #8: GenAI vs ground-truth values side by side, per complaint, with match/mismatch.
+@router.get("/export/comparison-report")
+async def export_comparison_report(
+    format: str = Query(pattern="^(csv|json|pdf)$"),
+    department_id: uuid.UUID | None = None,
+    date_from: datetime | None = None,
+    date_to: datetime | None = None,
+    db: AsyncSession = Depends(get_db),
+    current_user=Depends(_require_admin),
+):
+    if format == "csv":
+        content = await export_comparison_report_csv(db, department_id, date_from, date_to)
+        media_type, filename = "text/csv", "comparison_report.csv"
+    elif format == "json":
+        content = await export_comparison_report_json(db, department_id, date_from, date_to)
+        media_type, filename = "application/json", "comparison_report.json"
+    else:
+        content = await export_comparison_report_pdf(db, department_id, date_from, date_to)
+        media_type, filename = "application/pdf", "comparison_report.pdf"
+
+    return Response(
+        content=content,
+        media_type=media_type,
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
+# SRS deliverable #9: aggregate intelligence stats -- category/priority/sentiment
+# distribution, escalations, repeat complaints, SLA risk, policy usage, disagreement
+# rate, manual-review count.
+@router.get("/export/intelligence-report")
+async def export_intelligence_report(
+    format: str = Query(pattern="^(csv|json|pdf)$"),
+    db: AsyncSession = Depends(get_db),
+    current_user=Depends(_require_admin),
+):
+    if format == "csv":
+        content = await export_intelligence_report_csv(db)
+        media_type, filename = "text/csv", "intelligence_report.csv"
+    elif format == "json":
+        content = await export_intelligence_report_json(db)
+        media_type, filename = "application/json", "intelligence_report.json"
+    else:
+        content = await export_intelligence_report_pdf(db)
+        media_type, filename = "application/pdf", "intelligence_report.pdf"
 
     return Response(
         content=content,
