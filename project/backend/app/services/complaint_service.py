@@ -49,6 +49,7 @@ class ComplaintService:
             customer_selected_category=data.customer_selected_category,
             status=ComplaintStatus.SUBMITTED,
             is_prompt_injection=injection.is_injection,
+            attachments=[data.source_payload] if data.source_payload else None,
         )
         self.db.add(complaint)
         await self.db.flush()

@@ -13,6 +13,39 @@ class ComplaintCreate(BaseModel):
     booking_reference: str | None = Field(default=None, max_length=20)
     customer_selected_category: str | None = Field(default=None, max_length=255)
     channel: ComplaintChannel = ComplaintChannel.WEB_FORM
+    source_payload: dict | None = Field(
+        default=None,
+        description=(
+            "Raw source material for non-web-form channels -- the chat transcript, the "
+            "composed email fields, or the uploaded document's filename/extracted text. "
+            "Stored verbatim on the complaint for traceability (spec.md 3.1.2-3.1.4)."
+        ),
+    )
+
+
+class ComplaintFieldsDraft(BaseModel):
+    """What extract_complaint_fields() returns -- shown to the customer for
+    review/edit before they actually submit via POST /api/complaints/."""
+
+    title: str
+    description: str
+    product_type: str
+    booking_reference: str | None = None
+
+
+class ChatExtractRequest(BaseModel):
+    raw_text: str = Field(min_length=1, max_length=10_000)
+
+
+class EmailExtractRequest(BaseModel):
+    from_email: str = Field(min_length=3, max_length=255)
+    subject: str = Field(min_length=1, max_length=255)
+    body: str = Field(min_length=1, max_length=10_000)
+
+
+class DocumentExtractResponse(ComplaintFieldsDraft):
+    filename: str
+    extracted_text_preview: str
 
 
 class ComplaintCreateResponse(BaseModel):

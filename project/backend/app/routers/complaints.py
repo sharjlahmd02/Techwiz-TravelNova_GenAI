@@ -1,6 +1,6 @@
 import uuid
 
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, status
+from fastapi import APIRouter, BackgroundTasks, Depends, File, HTTPException, Query, UploadFile, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -12,16 +12,22 @@ from app.models.customer_message import CustomerMessage
 from app.models.enums import ComplaintStatus, HistoryAction
 from app.models.user import User
 from app.schemas.complaint import (
+    ChatExtractRequest,
     ComplaintCreate,
     ComplaintCreateResponse,
     ComplaintDetail,
+    ComplaintFieldsDraft,
     ComplaintStatusResponse,
     ComplaintTimelineEntry,
+    DocumentExtractResponse,
+    EmailExtractRequest,
     PaginatedComplaints,
     SatisfactionRatingCreate,
 )
 from app.schemas.message import CustomerMessageCreate, CustomerMessageResponse
 from app.services.complaint_service import ComplaintService, process_complaint
+from app.services.document_extractor import extract_text_from_upload
+from app.services.genai.channel_extractor import extract_complaint_fields
 
 router = APIRouter(prefix="/api/complaints", tags=["complaints"])
 
@@ -49,6 +55,49 @@ async def create_complaint(
     complaint = await service.create_complaint(data, current_user)
     background_tasks.add_task(process_complaint, complaint.id)
     return complaint
+
+
+@router.post("/extract-chat", response_model=ComplaintFieldsDraft)
+async def extract_from_chat(
+    data: ChatExtractRequest,
+    current_user: User = Depends(require_role("customer")),
+):
+    """Chat channel (spec.md 3.1.2): the frontend chat widget gathers the
+    customer's free-text answers into one transcript and sends it here.
+    Gemini turns it into a structured draft; nothing is saved to the DB yet
+    -- the customer reviews/edits the draft, then submits it for real via the
+    normal POST /api/complaints/ with channel="chat" and the transcript
+    attached as source_payload."""
+    draft = await extract_complaint_fields(data.raw_text)
+    return ComplaintFieldsDraft(**draft)
+
+
+@router.post("/extract-email", response_model=ComplaintFieldsDraft)
+async def extract_from_email(
+    data: EmailExtractRequest,
+    current_user: User = Depends(require_role("customer")),
+):
+    """Email channel (spec.md 3.1.3): simulates the subject-as-title,
+    body-as-description parsing a real inbound-email webhook would perform,
+    without requiring a live mailbox integration -- the customer composes
+    the email fields here instead of an external mail client."""
+    raw_text = f"Subject: {data.subject}\n\n{data.body}"
+    draft = await extract_complaint_fields(raw_text)
+    return ComplaintFieldsDraft(**draft)
+
+
+@router.post("/extract-document", response_model=DocumentExtractResponse)
+async def extract_from_document(
+    file: UploadFile = File(...),
+    current_user: User = Depends(require_role("customer")),
+):
+    """Document-upload channel (spec.md 3.1.4): accepts a PDF or DOCX
+    containing the complaint, extracts its text, then runs the same
+    structured extraction as the other channels."""
+    content = await file.read()
+    text = extract_text_from_upload(file.filename or "upload", content)
+    draft = await extract_complaint_fields(text)
+    return DocumentExtractResponse(**draft, filename=file.filename or "upload", extracted_text_preview=text[:2000])
 
 
 @router.get("/", response_model=PaginatedComplaints)

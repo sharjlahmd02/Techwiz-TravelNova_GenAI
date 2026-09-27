@@ -1,176 +1,24 @@
-import { zodResolver } from '@hookform/resolvers/zod'
 import { ArrowLeft, Check } from 'lucide-react'
 import { useState } from 'react'
-import { useForm } from 'react-hook-form'
 import { Link, useNavigate } from 'react-router-dom'
-import { z } from 'zod'
 import { CustomerShell } from '../../components/customer/CustomerShell'
 import { Button } from '../../components/ui/Button'
-import { FieldError, Input, Label, Textarea } from '../../components/ui/Input'
-import { complaintsApi } from '../../services/complaints'
-import { PRODUCT_TYPES } from '../../types/complaint'
-import type { ComplaintCreateResponse } from '../../types/complaint'
-
-const schema = z.object({
-  product_type: z.string().min(1, 'Choose a service type'),
-  title: z.string().min(1, 'Title is required').max(200),
-  description: z.string().min(50, 'Please provide at least 50 characters so we can help effectively').max(5000),
-  booking_reference: z.string().max(20).optional(),
-})
-
-type FormData = z.infer<typeof schema>
-
-const STEPS = ['Details', 'Review', 'Done']
+import { ChannelPicker } from './submit/ChannelPicker'
+import { ChatFlow } from './submit/ChatFlow'
+import { DocumentFlow } from './submit/DocumentFlow'
+import { EmailFlow } from './submit/EmailFlow'
+import { WebFormFlow } from './submit/WebFormFlow'
+import type { ComplaintChannel, ComplaintCreateResponse } from '../../types/complaint'
 
 export function SubmitComplaintPage() {
   const navigate = useNavigate()
-  const [step, setStep] = useState(0)
+  const [channel, setChannel] = useState<ComplaintChannel | null>(null)
   const [result, setResult] = useState<ComplaintCreateResponse | null>(null)
-  const [submitError, setSubmitError] = useState<string | null>(null)
 
-  const {
-    register,
-    handleSubmit,
-    watch,
-    setValue,
-    trigger,
-    formState: { errors, isSubmitting },
-  } = useForm<FormData>({ resolver: zodResolver(schema), defaultValues: { product_type: '' } })
-
-  const values = watch()
-
-  const goToReview = async () => {
-    const valid = await trigger()
-    if (valid) setStep(1)
-  }
-
-  const onSubmit = async (data: FormData) => {
-    setSubmitError(null)
-    try {
-      const { data: response } = await complaintsApi.create({
-        ...data,
-        booking_reference: data.booking_reference || null,
-      })
-      setResult(response)
-      setStep(2)
-    } catch {
-      setSubmitError('Something went wrong submitting your complaint. Please try again.')
-    }
-  }
-
-  return (
-    <CustomerShell title="Submit Complaint">
-      <div className="mx-auto max-w-[640px]">
-        {step !== 2 && (
-          <Link
-            to="/customer/dashboard"
-            className="mb-6 inline-flex items-center gap-1.5 text-sm font-medium text-zinc-500 transition-colors hover:text-[#0A0A0A]"
-          >
-            <ArrowLeft className="h-3.5 w-3.5" />
-            Back to My Complaints
-          </Link>
-        )}
-
-        <div className="mb-8 flex items-center justify-center gap-3">
-          {STEPS.map((label, i) => (
-            <div key={label} className="flex items-center gap-3">
-              <div className="flex flex-col items-center gap-1">
-                <div className={`h-2.5 w-2.5 rounded-full ${i <= step ? 'bg-black' : 'bg-zinc-300'}`} />
-                <span className={`text-xs ${i === step ? 'font-medium text-[#0A0A0A]' : 'text-zinc-400'}`}>{label}</span>
-              </div>
-              {i < STEPS.length - 1 && <div className="h-px w-10 bg-zinc-300" />}
-            </div>
-          ))}
-        </div>
-
-        {step === 0 && (
-          <div className="rounded-lg border border-zinc-200 bg-white p-7 transition-colors hover:border-zinc-300 sm:p-9">
-            <h2 className="mb-4 text-xl text-[#0A0A0A]">What's this about?</h2>
-            <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-3">
-              {PRODUCT_TYPES.map((type) => (
-                <button
-                  key={type}
-                  type="button"
-                  onClick={() => setValue('product_type', type)}
-                  className={`rounded-md border px-3 py-3 text-sm font-medium transition-colors ${
-                    values.product_type === type
-                      ? 'border-black bg-zinc-50 text-[#0A0A0A]'
-                      : 'border-zinc-200 text-[#0A0A0A] hover:border-zinc-400'
-                  }`}
-                >
-                  {type}
-                </button>
-              ))}
-            </div>
-            <FieldError message={errors.product_type?.message} />
-
-            <div className="mt-5">
-              <Label htmlFor="title">Complaint title</Label>
-              <Input id="title" {...register('title')} placeholder="e.g. Flight delayed with no communication" />
-              <FieldError message={errors.title?.message} />
-            </div>
-
-            <div className="mt-4">
-              <Label htmlFor="description">Description</Label>
-              <Textarea
-                id="description"
-                {...register('description')}
-                placeholder="Tell us what happened, including dates, booking reference, and any relevant details."
-              />
-              <FieldError message={errors.description?.message} />
-            </div>
-
-            <div className="mt-4">
-              <Label htmlFor="booking_reference" optional>
-                Booking reference
-              </Label>
-              <Input id="booking_reference" {...register('booking_reference')} placeholder="e.g. TNV-12345" />
-            </div>
-
-            <Button className="mt-6 w-full" onClick={goToReview}>
-              Continue to review
-            </Button>
-          </div>
-        )}
-
-        {step === 1 && (
-          <div className="rounded-lg border border-zinc-200 bg-white p-7 transition-colors hover:border-zinc-300 sm:p-9">
-            <h2 className="mb-4 text-xl text-[#0A0A0A]">Review your complaint</h2>
-            <dl className="space-y-3 text-sm">
-              <div>
-                <dt className="text-zinc-500">Service</dt>
-                <dd className="text-[#0A0A0A]">{values.product_type}</dd>
-              </div>
-              <div>
-                <dt className="text-zinc-500">Title</dt>
-                <dd className="text-[#0A0A0A]">{values.title}</dd>
-              </div>
-              <div>
-                <dt className="text-zinc-500">Description</dt>
-                <dd className="whitespace-pre-wrap text-[#0A0A0A]">{values.description}</dd>
-              </div>
-              {values.booking_reference && (
-                <div>
-                  <dt className="text-zinc-500">Booking reference</dt>
-                  <dd className="font-mono text-[#0A0A0A]">{values.booking_reference}</dd>
-                </div>
-              )}
-            </dl>
-
-            {submitError && <p className="mt-4 text-sm text-p0-text">{submitError}</p>}
-
-            <div className="mt-6 flex items-center justify-between">
-              <button onClick={() => setStep(0)} className="text-sm text-link hover:text-link-hover">
-                ← Looks wrong? Go back
-              </button>
-            </div>
-            <Button className="mt-4 w-full" onClick={handleSubmit(onSubmit)} loading={isSubmitting}>
-              Submit complaint
-            </Button>
-          </div>
-        )}
-
-        {step === 2 && result && (
+  if (result) {
+    return (
+      <CustomerShell title="Submit Complaint">
+        <div className="mx-auto max-w-[640px]">
           <div className="rounded-lg border border-zinc-200 bg-white p-9 text-center">
             <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-[--status-green-bg] text-[--status-green]">
               <Check className="h-6 w-6" strokeWidth={2.5} />
@@ -182,7 +30,36 @@ export function SubmitComplaintPage() {
               Track your complaint →
             </Button>
           </div>
+        </div>
+      </CustomerShell>
+    )
+  }
+
+  return (
+    <CustomerShell title="Submit Complaint">
+      <div className="mx-auto max-w-[640px]">
+        <Link
+          to="/customer/dashboard"
+          className="mb-6 inline-flex items-center gap-1.5 text-sm font-medium text-zinc-500 transition-colors hover:text-[#0A0A0A]"
+        >
+          <ArrowLeft className="h-3.5 w-3.5" />
+          Back to My Complaints
+        </Link>
+
+        {channel && (
+          <button
+            onClick={() => setChannel(null)}
+            className="mb-4 text-sm text-link hover:text-link-hover"
+          >
+            ← Choose a different way to submit
+          </button>
         )}
+
+        {!channel && <ChannelPicker onSelect={setChannel} />}
+        {channel === 'web_form' && <WebFormFlow onSubmitted={setResult} />}
+        {channel === 'chat' && <ChatFlow onSubmitted={setResult} />}
+        {channel === 'email' && <EmailFlow onSubmitted={setResult} />}
+        {channel === 'document' && <DocumentFlow onSubmitted={setResult} />}
       </div>
     </CustomerShell>
   )

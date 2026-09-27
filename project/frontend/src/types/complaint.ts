@@ -24,6 +24,19 @@ export interface ComplaintCreate {
   booking_reference?: string | null
   customer_selected_category?: string | null
   channel?: ComplaintChannel
+  source_payload?: Record<string, unknown> | null
+}
+
+export interface ComplaintFieldsDraft {
+  title: string
+  description: string
+  product_type: string
+  booking_reference: string | null
+}
+
+export interface DocumentExtractResponse extends ComplaintFieldsDraft {
+  filename: string
+  extracted_text_preview: string
 }
 
 export interface ComplaintCreateResponse {

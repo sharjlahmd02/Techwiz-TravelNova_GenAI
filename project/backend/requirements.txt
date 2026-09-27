@@ -12,6 +12,7 @@ google-genai
 httpx
 python-dotenv
 python-docx
+pypdf
 apscheduler
 pytest
 pytest-asyncio
