@@ -152,6 +152,8 @@ async def _save_pipeline_result(db: AsyncSession, complaint_id: uuid.UUID, pipel
             pipeline=pipeline,
             category=result.get("category"),
             subcategory=result.get("subcategory"),
+            primary_issue=result.get("primary_issue"),
+            secondary_issue=result.get("secondary_issue"),
             sentiment=result.get("sentiment"),
             sentiment_score=result.get("sentiment_score"),
             urgency=result.get("urgency"),

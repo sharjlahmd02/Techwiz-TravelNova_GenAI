@@ -5,6 +5,7 @@ import { Button } from '../../components/ui/Button'
 import { SeverityBadge } from '../../components/ui/Badge'
 import { Input, Label, Textarea } from '../../components/ui/Input'
 import { useToast } from '../../components/ui/Toast'
+import { EntitiesList, SentimentBadge } from '../../components/staff/PipelineIntelligence'
 import { reviewerApi, type ConflictFieldDecision } from '../../services/reviewer'
 import { COMPARED_FIELDS } from '../../types/staff'
 import type { StaffComplaintDetail } from '../../types/staff'
@@ -43,6 +44,8 @@ export function ConflictResolutionPage() {
 
   const conflictFields = useMemo(() => new Set(complaint?.comparison?.conflict_fields ?? []), [complaint])
   const genaiAvailable = complaint?.comparison?.genai_values != null
+  const genaiResult = complaint?.pipeline_results.find((r) => r.pipeline === 'genai')
+  const groundTruthResult = complaint?.pipeline_results.find((r) => r.pipeline === 'ground_truth')
 
   const setDecision = (field: string, decision: ConflictFieldDecision) => {
     setDecisions((prev) => ({ ...prev, [field]: decision }))
@@ -108,6 +111,38 @@ export function ConflictResolutionPage() {
         <div className="mb-4 rounded-md border border-p0-border bg-p0-bg px-4 py-3 text-sm text-p0-text">
           GenAI pipeline did not produce a result for this complaint (API failure). Only ground-truth and custom values
           are available below.
+        </div>
+      )}
+
+      {genaiResult && (genaiResult.sentiment || genaiResult.entities_extracted || genaiResult.primary_issue || groundTruthResult?.primary_issue) && (
+        <div className="mb-4 rounded-lg border border-[--border] bg-[--surface] p-4">
+          <p className="mb-3 text-xs font-medium text-[--text-secondary]">
+            AI-reported sentiment, entities &amp; issue labels — informational only, not a Pipeline 1/2 comparison field
+          </p>
+          <div className="flex flex-wrap items-start gap-x-8 gap-y-2 text-sm">
+            <div>
+              <p className="mb-0.5 text-xs text-[--text-muted]">Sentiment</p>
+              <SentimentBadge sentiment={genaiResult.sentiment} score={genaiResult.sentiment_score} />
+            </div>
+            <div>
+              <p className="mb-0.5 text-xs text-[--text-muted]">Entities extracted</p>
+              <EntitiesList entities={genaiResult.entities_extracted} />
+            </div>
+            <div>
+              <p className="mb-0.5 text-xs text-[--text-muted]">Primary / Secondary Issue (Pipeline 1)</p>
+              <p className="text-[--text-primary]">
+                {genaiResult.primary_issue ?? '—'}{genaiResult.secondary_issue ? ` + ${genaiResult.secondary_issue}` : ''}
+              </p>
+            </div>
+            {groundTruthResult?.primary_issue && (
+              <div>
+                <p className="mb-0.5 text-xs text-[--text-muted]">Primary / Secondary Issue (Pipeline 2)</p>
+                <p className="text-[--text-primary]">
+                  {groundTruthResult.primary_issue}{groundTruthResult.secondary_issue ? ` + ${groundTruthResult.secondary_issue}` : ''}
+                </p>
+              </div>
+            )}
+          </div>
         </div>
       )}
 

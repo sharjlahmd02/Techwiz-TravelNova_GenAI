@@ -54,6 +54,8 @@ class GroundTruthPipeline:
         return {
             "category": classification.category,
             "subcategory": classification.subcategory,
+            "primary_issue": classification.subcategory or classification.category,
+            "secondary_issue": classification.second_category,
             "urgency": urgency,
             "priority": priority,
             "department": department,

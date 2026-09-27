@@ -9,6 +9,11 @@ after) with exactly these fields:
 {
   "category": string,            // MUST be one of the provided categories, exactly as listed
   "subcategory": string,         // MUST be one of that category's subcategories, exactly as listed
+  "primary_issue": string,       // short label for the main problem being reported, e.g. "Damaged Product"
+  "secondary_issue": string | null, // short label for a distinct SECOND problem in the same complaint,
+                                  // e.g. a complaint about "Product arrived damaged and refund has not
+                                  // been processed" has primary_issue "Damaged Product" and
+                                  // secondary_issue "Refund Delay". null if there is only one issue.
   "sentiment": string,           // one of: "Positive", "Neutral", "Negative", "Very Negative"
   "sentiment_score": number,     // -1.0 to 1.0
   "urgency": string,             // one of: "critical", "high", "medium", "low" -- based on OBJECTIVE FACTS ONLY, never tone

@@ -128,6 +128,8 @@ class ClassificationResult:
     confidence: float
     category_score: int
     subcategory_score: int
+    second_category: str | None = None
+    second_category_score: int = 0
 
 
 def _phrase_weight(phrase: str) -> int:
@@ -184,6 +186,19 @@ class KeywordClassifier:
         if not best_category or best_category_score == 0:
             return ClassificationResult(None, None, 0.0, 0, 0)
 
+        # A distinct secondary issue: the runner-up category, but only when its own
+        # keyword signal is substantial relative to the winner -- not just one
+        # incidental word -- so we don't manufacture a "secondary issue" out of noise.
+        second_category = None
+        second_category_score = 0
+        runner_up_scores = {k: v for k, v in category_scores.items() if k != best_category and v > 0}
+        if runner_up_scores:
+            candidate = max(runner_up_scores, key=lambda k: runner_up_scores[k])
+            candidate_score = runner_up_scores[candidate]
+            if candidate_score >= max(2, best_category_score * 0.5):
+                second_category = candidate
+                second_category_score = candidate_score
+
         subcategory_scores: dict[str, int] = {}
         for sub_name in self.categories[best_category]:
             score = _score_keywords(text_lower, _subcategory_phrases(sub_name))
@@ -206,4 +221,6 @@ class KeywordClassifier:
             confidence=combined_confidence,
             category_score=best_category_score,
             subcategory_score=best_subcategory_score,
+            second_category=second_category,
+            second_category_score=second_category_score,
         )

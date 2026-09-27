@@ -6,6 +6,7 @@ import { PriorityBadge, StatusBadge } from '../../components/ui/Badge'
 import { Panel } from '../../components/ui/Card'
 import { Input, Label, Select, Textarea } from '../../components/ui/Input'
 import { useToast } from '../../components/ui/Toast'
+import { EntitiesList, SentimentBadge } from '../../components/staff/PipelineIntelligence'
 import { managerApi } from '../../services/manager'
 import type { StaffComplaintDetail } from '../../types/staff'
 
@@ -122,6 +123,23 @@ export function ManagerComplaintDetail() {
                 <p className="text-[--text-primary]">
                   {r.category ?? '—'} {r.subcategory ? `→ ${r.subcategory}` : ''} · {r.priority ?? '—'} / {r.urgency ?? '—'}
                 </p>
+                {(r.primary_issue || r.secondary_issue) && (
+                  <p className="mt-1 text-xs text-[--text-muted]">
+                    Issue: {r.primary_issue ?? '—'}{r.secondary_issue ? ` + ${r.secondary_issue}` : ''}
+                  </p>
+                )}
+                {r.pipeline === 'genai' && (
+                  <div className="mt-2 flex flex-wrap items-start gap-x-6 gap-y-1">
+                    <div>
+                      <p className="mb-0.5 text-xs text-[--text-muted]">Sentiment</p>
+                      <SentimentBadge sentiment={r.sentiment} score={r.sentiment_score} />
+                    </div>
+                    <div>
+                      <p className="mb-0.5 text-xs text-[--text-muted]">Entities extracted</p>
+                      <EntitiesList entities={r.entities_extracted} />
+                    </div>
+                  </div>
+                )}
               </div>
             ))}
           </Panel>

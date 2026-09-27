@@ -16,11 +16,21 @@ export interface StaffComplaintSummary {
   created_at: string
 }
 
+export interface EntitiesExtracted {
+  booking_reference?: string | null
+  monetary_amounts?: number[]
+  flight_numbers?: string[]
+  names?: string[]
+  dates?: string[]
+}
+
 export interface PipelineResultSchema {
   id: string
   pipeline: 'genai' | 'ground_truth'
   category: string | null
   subcategory: string | null
+  primary_issue: string | null
+  secondary_issue: string | null
   sentiment: string | null
   sentiment_score: number | null
   urgency: string | null
@@ -31,6 +41,7 @@ export interface PipelineResultSchema {
   compensation_eligible: boolean
   suggested_response: string | null
   confidence_score: number | null
+  entities_extracted: EntitiesExtracted | null
   processing_time_ms: number | null
   created_at: string
 }

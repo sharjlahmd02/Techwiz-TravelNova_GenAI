@@ -6,6 +6,7 @@ import { PriorityBadge, StatusBadge } from '../../components/ui/Badge'
 import { Panel } from '../../components/ui/Card'
 import { Select, Textarea } from '../../components/ui/Input'
 import { useToast } from '../../components/ui/Toast'
+import { EntitiesList, SentimentBadge } from '../../components/staff/PipelineIntelligence'
 import { agentApi } from '../../services/agent'
 import type { StaffComplaintDetail } from '../../types/staff'
 import type { ComplaintStatus } from '../../types/complaint'
@@ -111,10 +112,24 @@ export function AgentComplaintDetail() {
                   <dd className="text-[--text-primary]">{primary.category ?? '—'} {primary.subcategory ? `→ ${primary.subcategory}` : ''}</dd>
                 </div>
                 <div>
+                  <dt className="text-xs text-[--text-muted]">Primary / Secondary Issue</dt>
+                  <dd className="text-[--text-primary]">
+                    {primary.primary_issue ?? '—'}{primary.secondary_issue ? ` + ${primary.secondary_issue}` : ''}
+                  </dd>
+                </div>
+                <div>
                   <dt className="text-xs text-[--text-muted]">Refund / Compensation</dt>
                   <dd className="text-[--text-primary]">
                     {primary.refund_eligible ? 'Refund eligible' : 'No refund'} · {primary.compensation_eligible ? 'Compensation eligible' : 'No compensation'}
                   </dd>
+                </div>
+                <div>
+                  <dt className="text-xs text-[--text-muted]">Sentiment</dt>
+                  <dd className="mt-0.5"><SentimentBadge sentiment={genai?.sentiment} score={genai?.sentiment_score} /></dd>
+                </div>
+                <div>
+                  <dt className="text-xs text-[--text-muted]">Entities extracted</dt>
+                  <dd className="mt-0.5"><EntitiesList entities={genai?.entities_extracted} /></dd>
                 </div>
                 {primary.suggested_response && (
                   <div className="col-span-2">

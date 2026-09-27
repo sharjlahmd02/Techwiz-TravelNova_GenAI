@@ -11,6 +11,8 @@ class PipelineResultSchema(BaseModel):
     pipeline: str
     category: str | None
     subcategory: str | None
+    primary_issue: str | None
+    secondary_issue: str | None
     sentiment: str | None
     sentiment_score: float | None
     urgency: str | None
@@ -21,6 +23,7 @@ class PipelineResultSchema(BaseModel):
     compensation_eligible: bool
     suggested_response: str | None
     confidence_score: float | None
+    entities_extracted: dict | None
     processing_time_ms: int | None
     created_at: datetime
 

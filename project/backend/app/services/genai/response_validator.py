@@ -83,6 +83,12 @@ def validate_response(
         subcategory = None
     data["subcategory"] = subcategory
 
+    primary_issue = raw.get("primary_issue")
+    data["primary_issue"] = primary_issue.strip() if isinstance(primary_issue, str) and primary_issue.strip() else None
+
+    secondary_issue = raw.get("secondary_issue")
+    data["secondary_issue"] = secondary_issue.strip() if isinstance(secondary_issue, str) and secondary_issue.strip() else None
+
     sentiment = raw.get("sentiment")
     if sentiment not in VALID_SENTIMENTS:
         issues.append(f"invalid_sentiment:{sentiment!r}")

@@ -19,6 +19,8 @@ class PipelineResult(Base):
 
     category: Mapped[str | None] = mapped_column(String(255), nullable=True)
     subcategory: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    primary_issue: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    secondary_issue: Mapped[str | None] = mapped_column(String(255), nullable=True)
     sentiment: Mapped[str | None] = mapped_column(String(50), nullable=True)
     sentiment_score: Mapped[float | None] = mapped_column(Float, nullable=True)
     urgency: Mapped[Urgency | None] = mapped_column(Enum(Urgency, name="pr_urgency"), nullable=True)
