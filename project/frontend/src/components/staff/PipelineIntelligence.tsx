@@ -1,10 +1,17 @@
-import type { EntitiesExtracted } from '../../types/staff'
+import type { EntitiesExtracted, PolicyReference } from '../../types/staff'
 
 const SENTIMENT_STYLES: Record<string, string> = {
   'Very Negative': 'bg-p0-bg text-p0-text',
   Negative: 'bg-amber-50 text-amber-700',
   Neutral: 'bg-zinc-100 text-zinc-600',
   Positive: 'bg-[--status-green-bg] text-[--status-green]',
+}
+
+const POLICY_STATUS_STYLES: Record<string, string> = {
+  Applicable: 'bg-[--status-green-bg] text-[--status-green]',
+  'Conditionally Applicable': 'bg-amber-50 text-amber-700',
+  'Not Applicable': 'bg-zinc-100 text-zinc-500',
+  Outdated: 'bg-p0-bg text-p0-text',
 }
 
 function formatEntities(entities: EntitiesExtracted | null | undefined): string[] {
@@ -37,6 +44,27 @@ export function EntitiesList({ entities }: { entities: EntitiesExtracted | null 
       {lines.map((line) => (
         <li key={line}>{line}</li>
       ))}
+    </ul>
+  )
+}
+
+export function PolicyReferenceList({ references }: { references: (string | PolicyReference)[] | null | undefined }) {
+  if (!references?.length) return <span className="text-[--text-primary]">—</span>
+  return (
+    <ul className="flex flex-wrap gap-1.5">
+      {references.map((ref, i) => {
+        const documentId = typeof ref === 'string' ? ref : ref.document_id
+        const status = typeof ref === 'string' ? null : ref.status
+        return (
+          <li
+            key={`${documentId}-${i}`}
+            className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${status ? POLICY_STATUS_STYLES[status] ?? 'bg-zinc-100 text-zinc-600' : 'bg-zinc-100 text-zinc-600'}`}
+          >
+            <span className="font-mono">{documentId}</span>
+            {status && <span className="opacity-75">· {status}</span>}
+          </li>
+        )
+      })}
     </ul>
   )
 }

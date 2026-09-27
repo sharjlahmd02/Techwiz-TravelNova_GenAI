@@ -33,7 +33,7 @@ class GenAIPipeline:
         complaint_text: str,
         metadata: dict[str, Any],
         policy_snippets: list[dict],
-        valid_policy_ids: set[str],
+        valid_policy_ids: dict[str, str],
     ) -> dict[str, Any]:
         injection = detect_injection(complaint_text)
         base = {

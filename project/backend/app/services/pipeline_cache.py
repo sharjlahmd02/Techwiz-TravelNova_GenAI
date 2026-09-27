@@ -28,7 +28,13 @@ class PipelineBundle:
     genai: GenAIPipeline
     categories: dict[str, list[str]]
     departments: list[dict]
-    valid_policy_ids: set[str]
+    # document_id -> its current KnowledgeBaseStatus value ("active"/"previous"/"superseded").
+    # Draft docs are excluded entirely (never published, so citing one is a hallucination);
+    # Previous/Superseded ARE included here (unlike the retrieval query in
+    # complaint_service.select_relevant_policies, which stays Active-only) so a citation of a
+    # real-but-outdated policy gets marked "Outdated" (SRS 9.5.12) instead of being wrongly
+    # treated as a hallucinated/invented policy ID.
+    valid_policy_ids: dict[str, str]
 
 
 _cache: PipelineBundle | None = None
@@ -95,11 +101,13 @@ async def _load_escalation_rules(db: AsyncSession) -> list[dict]:
     ]
 
 
-async def _load_policy_ids(db: AsyncSession) -> set[str]:
+async def _load_policy_ids(db: AsyncSession) -> dict[str, str]:
     result = await db.execute(
-        select(KnowledgeBaseDocument.document_id).where(KnowledgeBaseDocument.status == KnowledgeBaseStatus.ACTIVE)
+        select(KnowledgeBaseDocument.document_id, KnowledgeBaseDocument.status).where(
+            KnowledgeBaseDocument.status != KnowledgeBaseStatus.DRAFT
+        )
     )
-    return set(result.scalars().all())
+    return {doc_id: status.value for doc_id, status in result.all()}
 
 
 async def get_pipelines(db: AsyncSession) -> PipelineBundle:

@@ -7,7 +7,9 @@ departments); the user prompt is built fresh per complaint.
 # change in a way that could affect the model's output -- persisted per-analysis on
 # PipelineResult.prompt_version so a specific complaint's result can be traced back to
 # exactly which prompt version produced it (SRS req. liii).
-PROMPT_VERSION = "1.0"
+PROMPT_VERSION = "1.1"
+
+POLICY_APPLICABILITY_STATUSES = ["Applicable", "Conditionally Applicable", "Not Applicable", "Outdated"]
 
 OUTPUT_SCHEMA_DESCRIPTION = """Respond with ONLY a single JSON object (no markdown fences, no prose before or
 after) with exactly these fields:
@@ -27,7 +29,17 @@ after) with exactly these fields:
   "department": string,          // a department CODE from the provided list, e.g. "DEPT-02"
   "escalation_required": boolean,
   "escalation_level": integer,   // 0-5, 0 if escalation_required is false
-  "policy_references": [string], // policy IDs from the provided knowledge base ONLY, e.g. "CMP-POL-07". Empty array if none apply.
+  "policy_references": [       // policies from the provided knowledge base ONLY. Empty array if none apply.
+    {
+      "document_id": string,      // e.g. "CMP-POL-07", exactly as listed in "Available policies"
+      "status": string            // your own assessment: one of "Applicable" (directly governs this
+                                   // complaint as written), "Conditionally Applicable" (only applies
+                                   // if a specific condition holds, e.g. only for non-refundable
+                                   // bookings), "Not Applicable" (topically related but doesn't
+                                   // actually cover this case), "Outdated" (the provided text is
+                                   // marked as a previous/superseded version, not current policy)
+    }
+  ],
   "required_actions": [string],
   "prohibited_actions": [string],
   "refund_eligible": boolean,

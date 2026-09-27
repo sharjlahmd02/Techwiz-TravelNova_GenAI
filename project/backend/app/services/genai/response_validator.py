@@ -7,6 +7,7 @@ flag responses worth a human's attention.
 import re
 from dataclasses import dataclass, field
 
+from app.services.genai.prompt_builder import POLICY_APPLICABILITY_STATUSES
 from app.services.ground_truth.condition_extractor import extract_conditions
 from app.services.ground_truth.sla_calculator import PRIORITY_SLA
 
@@ -60,12 +61,48 @@ def _coerce_list_of_str(value) -> list[str]:
     return []
 
 
+def _validate_policy_references(raw_refs, valid_policy_ids: dict[str, str]) -> tuple[list[dict], bool]:
+    """Each entry may be `{"document_id": ..., "status": ...}` (the current prompt
+    schema) or, defensively, a bare string (older/malformed model output) --
+    treated as `{"document_id": <string>, "status": "Applicable"}`. Any document_id
+    not in valid_policy_ids is dropped as a hallucination. A document whose CURRENT
+    KnowledgeBaseStatus isn't "active" is force-marked "Outdated" regardless of what
+    the model self-reported -- that's an objective fact, not a judgment call."""
+    if not isinstance(raw_refs, list):
+        return [], False
+
+    validated: list[dict] = []
+    hallucinated = False
+    for entry in raw_refs:
+        if isinstance(entry, dict):
+            document_id = entry.get("document_id")
+            status = entry.get("status")
+        elif isinstance(entry, str):
+            document_id, status = entry, "Applicable"
+        else:
+            hallucinated = True
+            continue
+
+        if not isinstance(document_id, str) or document_id not in valid_policy_ids:
+            hallucinated = True
+            continue
+
+        if status not in POLICY_APPLICABILITY_STATUSES:
+            status = "Applicable"
+        if valid_policy_ids[document_id] != "active":
+            status = "Outdated"
+
+        validated.append({"document_id": document_id, "status": status})
+
+    return validated, hallucinated
+
+
 def validate_response(
     raw: dict,
     complaint_text: str,
     valid_categories: dict[str, list[str]],
     valid_department_codes: set[str],
-    valid_policy_ids: set[str],
+    valid_policy_ids: dict[str, str],
 ) -> ValidationResult:
     issues: list[str] = []
     data: dict = {}
@@ -118,11 +155,10 @@ def validate_response(
     escalation_level = raw.get("escalation_level")
     data["escalation_level"] = escalation_level if isinstance(escalation_level, int) and 0 <= escalation_level <= 5 else 0
 
-    cited_policies = _coerce_list_of_str(raw.get("policy_references"))
-    valid_cited = [p for p in cited_policies if p in valid_policy_ids]
-    if len(valid_cited) != len(cited_policies):
+    validated_policies, hallucinated = _validate_policy_references(raw.get("policy_references"), valid_policy_ids)
+    if hallucinated:
         issues.append("hallucinated_policy_reference")
-    data["policy_references"] = valid_cited
+    data["policy_references"] = validated_policies
 
     data["required_actions"] = _coerce_list_of_str(raw.get("required_actions"))
     data["prohibited_actions"] = _coerce_list_of_str(raw.get("prohibited_actions"))

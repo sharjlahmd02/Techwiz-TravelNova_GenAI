@@ -6,7 +6,7 @@ import { PriorityBadge, StatusBadge } from '../../components/ui/Badge'
 import { Panel } from '../../components/ui/Card'
 import { Input, Label, Select, Textarea } from '../../components/ui/Input'
 import { useToast } from '../../components/ui/Toast'
-import { EntitiesList, SentimentBadge } from '../../components/staff/PipelineIntelligence'
+import { EntitiesList, PolicyReferenceList, SentimentBadge } from '../../components/staff/PipelineIntelligence'
 import { managerApi } from '../../services/manager'
 import type { StaffComplaintDetail } from '../../types/staff'
 
@@ -144,6 +144,12 @@ export function ManagerComplaintDetail() {
                       <p className="mb-0.5 text-xs text-[--text-muted]">Entities extracted</p>
                       <EntitiesList entities={r.entities_extracted} />
                     </div>
+                  </div>
+                )}
+                {!!r.policy_references?.length && (
+                  <div className="mt-2">
+                    <p className="mb-0.5 text-xs text-[--text-muted]">Policies cited</p>
+                    <PolicyReferenceList references={r.policy_references} />
                   </div>
                 )}
                 {(r.provider || r.model_name || r.prompt_version || r.policy_version) && (

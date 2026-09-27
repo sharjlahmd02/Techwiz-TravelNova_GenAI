@@ -2,7 +2,7 @@ from app.services.genai.response_validator import validate_response
 
 CATEGORIES = {"Flight Problems": ["Flight Delay (1-3 hours)", "Flight Cancellation"]}
 DEPARTMENTS = {"DEPT-02"}
-POLICIES = {"FLT-POL-14"}
+POLICIES = {"FLT-POL-14": "active"}
 
 
 def _valid_raw(**overrides):
@@ -16,7 +16,7 @@ def _valid_raw(**overrides):
         "department": "DEPT-02",
         "escalation_required": False,
         "escalation_level": 0,
-        "policy_references": ["FLT-POL-14"],
+        "policy_references": [{"document_id": "FLT-POL-14", "status": "Applicable"}],
         "required_actions": ["Apologize"],
         "prohibited_actions": [],
         "refund_eligible": False,
@@ -46,10 +46,51 @@ def test_unknown_category_is_stripped():
 
 def test_hallucinated_policy_reference_is_removed():
     result = validate_response(
-        _valid_raw(policy_references=["FLT-POL-14", "FAKE-POL-999"]), "text", CATEGORIES, DEPARTMENTS, POLICIES
+        _valid_raw(
+            policy_references=[
+                {"document_id": "FLT-POL-14", "status": "Applicable"},
+                {"document_id": "FAKE-POL-999", "status": "Applicable"},
+            ]
+        ),
+        "text",
+        CATEGORIES,
+        DEPARTMENTS,
+        POLICIES,
     )
-    assert result.data["policy_references"] == ["FLT-POL-14"]
+    assert result.data["policy_references"] == [{"document_id": "FLT-POL-14", "status": "Applicable"}]
     assert "hallucinated_policy_reference" in result.issues
+
+
+def test_policy_reference_accepts_bare_string_and_defaults_status():
+    result = validate_response(
+        _valid_raw(policy_references=["FLT-POL-14"]), "text", CATEGORIES, DEPARTMENTS, POLICIES
+    )
+    assert result.data["policy_references"] == [{"document_id": "FLT-POL-14", "status": "Applicable"}]
+    assert "hallucinated_policy_reference" not in result.issues
+
+
+def test_non_active_policy_is_forced_outdated_regardless_of_self_reported_status():
+    policies = {"FLT-POL-14": "superseded"}
+    result = validate_response(
+        _valid_raw(policy_references=[{"document_id": "FLT-POL-14", "status": "Applicable"}]),
+        "text",
+        CATEGORIES,
+        DEPARTMENTS,
+        policies,
+    )
+    assert result.data["policy_references"] == [{"document_id": "FLT-POL-14", "status": "Outdated"}]
+    assert "hallucinated_policy_reference" not in result.issues
+
+
+def test_invalid_self_reported_status_defaults_to_applicable():
+    result = validate_response(
+        _valid_raw(policy_references=[{"document_id": "FLT-POL-14", "status": "Definitely Maybe"}]),
+        "text",
+        CATEGORIES,
+        DEPARTMENTS,
+        POLICIES,
+    )
+    assert result.data["policy_references"] == [{"document_id": "FLT-POL-14", "status": "Applicable"}]
 
 
 def test_invalid_priority_defaults_to_p3():

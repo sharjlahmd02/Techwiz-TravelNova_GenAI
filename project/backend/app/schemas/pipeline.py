@@ -24,6 +24,7 @@ class PipelineResultSchema(BaseModel):
     suggested_response: str | None
     confidence_score: float | None
     entities_extracted: dict | None
+    policy_references: list | None
     processing_time_ms: int | None
     provider: str | None
     model_name: str | None
