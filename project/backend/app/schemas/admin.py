@@ -206,6 +206,19 @@ class PaginatedAuditLog(BaseModel):
 
 
 # ---- System analytics ----
+class CategoryTrendPoint(BaseModel):
+    category: str
+    this_week: int
+    last_week: int
+    delta: int
+
+
+class WeekOverWeek(BaseModel):
+    this_week: int
+    last_week: int
+    delta: int
+
+
 class AdminAnalytics(BaseModel):
     total_complaints: int
     resolved_today: int
@@ -214,6 +227,9 @@ class AdminAnalytics(BaseModel):
     data_assets: dict[str, int]
     category_distribution: dict[str, int]
     priority_distribution: dict[str, int]
+    category_trend: list[CategoryTrendPoint]
+    escalation_trend: WeekOverWeek
+    volume_trend: WeekOverWeek
 
 
 # ---- Export / Import ----

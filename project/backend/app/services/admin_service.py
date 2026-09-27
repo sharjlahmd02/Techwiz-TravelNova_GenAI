@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from fastapi import BackgroundTasks, HTTPException, UploadFile, status
 from sqlalchemy import func, select
@@ -24,6 +24,7 @@ from app.schemas.admin import (
     AdminUserCreate,
     AdminUserUpdate,
     CategoryCreate,
+    CategoryTrendPoint,
     CategoryUpdate,
     DepartmentCreate,
     DepartmentUpdate,
@@ -34,6 +35,7 @@ from app.schemas.admin import (
     ResolutionRuleCreate,
     ResolutionRuleUpdate,
     SubcategoryCreate,
+    WeekOverWeek,
 )
 from app.services import pipeline_cache
 from app.services.complaint_service import process_complaint
@@ -350,6 +352,52 @@ class AdminService:
             if count:
                 priority_distribution[p.value] = count
 
+        # SRS Step 65 wants trend detection ("rising delivery complaints," "escalation
+        # spikes"), not just point-in-time snapshots -- a simple week-over-week delta
+        # per category, plus overall volume and escalation trends.
+        now = datetime.now(timezone.utc)
+        week_start = now - timedelta(days=7)
+        prev_week_start = now - timedelta(days=14)
+
+        category_trend: list[CategoryTrendPoint] = []
+        for row in (await self.db.execute(select(Category.name))).all():
+            (name,) = row
+            this_week = await self.db.scalar(
+                select(func.count())
+                .select_from(Complaint)
+                .join(Category, Complaint.category_id == Category.id)
+                .where(Category.name == name, Complaint.created_at >= week_start)
+            ) or 0
+            last_week = await self.db.scalar(
+                select(func.count())
+                .select_from(Complaint)
+                .join(Category, Complaint.category_id == Category.id)
+                .where(
+                    Category.name == name,
+                    Complaint.created_at >= prev_week_start,
+                    Complaint.created_at < week_start,
+                )
+            ) or 0
+            if this_week or last_week:
+                category_trend.append(
+                    CategoryTrendPoint(category=name, this_week=this_week, last_week=last_week, delta=this_week - last_week)
+                )
+        category_trend.sort(key=lambda t: t.delta, reverse=True)
+
+        async def _week_over_week(*extra_conditions) -> WeekOverWeek:
+            this_week = await self.db.scalar(
+                select(func.count()).select_from(Complaint).where(Complaint.created_at >= week_start, *extra_conditions)
+            ) or 0
+            last_week = await self.db.scalar(
+                select(func.count())
+                .select_from(Complaint)
+                .where(Complaint.created_at >= prev_week_start, Complaint.created_at < week_start, *extra_conditions)
+            ) or 0
+            return WeekOverWeek(this_week=this_week, last_week=last_week, delta=this_week - last_week)
+
+        volume_trend = await _week_over_week()
+        escalation_trend = await _week_over_week(Complaint.escalation_level > 0)
+
         return AdminAnalytics(
             total_complaints=total_complaints or 0,
             resolved_today=resolved_today or 0,
@@ -358,6 +406,9 @@ class AdminService:
             data_assets=data_assets,
             category_distribution=category_distribution,
             priority_distribution=priority_distribution,
+            category_trend=category_trend,
+            escalation_trend=escalation_trend,
+            volume_trend=volume_trend,
         )
 
     # ---- Bulk import (hidden evaluation dataset) ----

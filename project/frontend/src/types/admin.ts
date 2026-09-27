@@ -93,6 +93,19 @@ export interface PaginatedAuditLog {
   has_next: boolean
 }
 
+export interface WeekOverWeek {
+  this_week: number
+  last_week: number
+  delta: number
+}
+
+export interface CategoryTrendPoint {
+  category: string
+  this_week: number
+  last_week: number
+  delta: number
+}
+
 export interface AdminAnalytics {
   total_complaints: number
   resolved_today: number
@@ -101,6 +114,9 @@ export interface AdminAnalytics {
   data_assets: Record<string, number>
   category_distribution: Record<string, number>
   priority_distribution: Record<string, number>
+  category_trend: CategoryTrendPoint[]
+  escalation_trend: WeekOverWeek
+  volume_trend: WeekOverWeek
 }
 
 export interface DepartmentMetrics {
