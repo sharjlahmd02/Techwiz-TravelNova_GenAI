@@ -49,3 +49,16 @@ def test_genai_failure_always_routes_to_review():
     assert result.conflict_severity == "genai_unavailable"
     assert result.genai_values is None
     assert result.ground_truth_values["priority"] == "P2"
+    assert result.verification_score is None
+
+
+def test_verification_score_is_full_when_pipelines_agree():
+    result = compare_pipelines(dict(BASE), dict(BASE))
+    assert result.verification_score == 1.0
+
+
+def test_verification_score_reflects_partial_agreement():
+    # 1 of 9 COMPARED_FIELDS differs (department) -> 8/9 agreement.
+    genai = dict(BASE, department="DEPT-03")
+    result = compare_pipelines(genai, dict(BASE))
+    assert result.verification_score == round(8 / 9, 3)

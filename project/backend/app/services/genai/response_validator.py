@@ -15,6 +15,7 @@ VALID_SENTIMENTS = {"Positive", "Neutral", "Negative", "Very Negative"}
 VALID_URGENCY = {"critical", "high", "medium", "low"}
 VALID_PRIORITY = {"P0", "P1", "P2", "P3"}
 CONFIDENCE_THRESHOLD = 0.5
+MAX_CLARIFICATION_QUESTIONS = 3
 
 # "business day" isn't a real duration, but this is only used to sanity-check
 # a promised timeline against the SLA order of magnitude, not to schedule anything.
@@ -187,6 +188,11 @@ def validate_response(
 
     entities = raw.get("entities_extracted")
     data["entities_extracted"] = entities if isinstance(entities, dict) else {}
+
+    clarification_questions = _coerce_list_of_str(raw.get("clarification_questions"))
+    data["clarification_questions"] = [q.strip() for q in clarification_questions if q.strip()][:MAX_CLARIFICATION_QUESTIONS]
+    if data["clarification_questions"]:
+        issues.append("missing_information")
 
     # Sentiment/urgency cross-check: if the model marked something P0/critical
     # while very negative, verify the ground-truth condition extractor also

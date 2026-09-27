@@ -6,7 +6,7 @@ import { SeverityBadge } from '../../components/ui/Badge'
 import { Input, Label, Textarea } from '../../components/ui/Input'
 import { useToast } from '../../components/ui/Toast'
 import { EntitiesList, SentimentBadge } from '../../components/staff/PipelineIntelligence'
-import { reviewerApi, type ConflictFieldDecision } from '../../services/reviewer'
+import { reviewerApi, type ConflictFieldDecision, type ResponseTone } from '../../services/reviewer'
 import { COMPARED_FIELDS } from '../../types/staff'
 import type { StaffComplaintDetail } from '../../types/staff'
 
@@ -53,6 +53,7 @@ export function ConflictResolutionPage() {
 
   const [regenerating, setRegenerating] = useState(false)
   const [regeneratedResponse, setRegeneratedResponse] = useState<string | null>(null)
+  const [tone, setTone] = useState<ResponseTone>('Professional')
 
   const load = () => {
     if (!id) return
@@ -138,7 +139,7 @@ export function ConflictResolutionPage() {
     if (!id) return
     setRegenerating(true)
     try {
-      const { data } = await reviewerApi.regenerateResponse(id)
+      const { data } = await reviewerApi.regenerateResponse(id, tone)
       setRegeneratedResponse(data.suggested_response)
       show('Response regenerated', 'success')
     } catch (err) {
@@ -165,6 +166,11 @@ export function ConflictResolutionPage() {
       actions={
         <div className="flex items-center gap-3">
           <span className="font-mono text-sm text-[--text-secondary]">{complaint.complaint_id}</span>
+          {comparison?.verification_score != null && (
+            <span className="text-xs text-[--text-muted]">
+              {Math.round(comparison.verification_score * 100)}% verified
+            </span>
+          )}
           {comparison && <SeverityBadge severity={comparison.conflict_severity} />}
         </div>
       }
@@ -224,11 +230,23 @@ export function ConflictResolutionPage() {
       )}
 
       <div className="mb-4 rounded-lg border border-[--border] bg-[--surface] p-4">
-        <div className="mb-2 flex items-center justify-between">
+        <div className="mb-2 flex items-center justify-between gap-2">
           <p className="text-xs font-medium text-[--text-secondary]">Suggested response</p>
-          <Button variant="ghost" onClick={handleRegenerate} loading={regenerating}>
-            {regeneratedResponse || genaiResult?.suggested_response ? 'Regenerate response' : 'Generate response'}
-          </Button>
+          <div className="flex items-center gap-2">
+            <select
+              value={tone}
+              onChange={(e) => setTone(e.target.value as ResponseTone)}
+              className="h-8 rounded-md border border-[--border] bg-[--surface] px-2 text-xs text-[--text-primary]"
+            >
+              <option value="Professional">Professional</option>
+              <option value="Empathetic">Empathetic</option>
+              <option value="Concise">Concise</option>
+              <option value="Formal">Formal</option>
+            </select>
+            <Button variant="ghost" onClick={handleRegenerate} loading={regenerating}>
+              {regeneratedResponse || genaiResult?.suggested_response ? 'Regenerate response' : 'Generate response'}
+            </Button>
+          </div>
         </div>
         <p className="whitespace-pre-wrap text-sm text-[--text-primary]">
           {regeneratedResponse ?? genaiResult?.suggested_response ?? 'No response drafted yet.'}

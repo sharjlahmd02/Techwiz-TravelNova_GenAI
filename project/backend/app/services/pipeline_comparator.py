@@ -30,6 +30,12 @@ class ComparisonResult:
     final_values: dict | None = None
     genai_values: dict | None = None
     ground_truth_values: dict | None = None
+    # SRS req. li: a continuous 0.0-1.0 consistency/compliance measure, alongside the
+    # categorical conflict_severity -- the fraction of COMPARED_FIELDS both pipelines
+    # agreed on. None when there's nothing to compare against (GenAI unavailable), not 0.0
+    # -- a missing pipeline isn't the same claim as "the two pipelines actively disagreed
+    # on everything".
+    verification_score: float | None = None
 
 
 def compare_pipelines(genai_result: dict, ground_truth_result: dict) -> ComparisonResult:
@@ -42,6 +48,7 @@ def compare_pipelines(genai_result: dict, ground_truth_result: dict) -> Comparis
             conflict_severity="genai_unavailable",
             ground_truth_values=gt_values,
             genai_values=None,
+            verification_score=None,
         )
 
     conflicts = []
@@ -62,6 +69,7 @@ def compare_pipelines(genai_result: dict, ground_truth_result: dict) -> Comparis
 
     genai_values = {f: genai_result.get(f) for f in COMPARED_FIELDS}
     gt_values = {f: ground_truth_result.get(f) for f in COMPARED_FIELDS}
+    verification_score = round((len(COMPARED_FIELDS) - len(conflicts)) / len(COMPARED_FIELDS), 3)
 
     return ComparisonResult(
         has_conflict=has_conflict,
@@ -71,4 +79,5 @@ def compare_pipelines(genai_result: dict, ground_truth_result: dict) -> Comparis
         final_values=gt_values if not has_conflict else None,
         genai_values=genai_values,
         ground_truth_values=gt_values,
+        verification_score=verification_score,
     )

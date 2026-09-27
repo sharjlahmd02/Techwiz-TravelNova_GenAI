@@ -307,6 +307,9 @@ async def _intelligence_stats(db: AsyncSession) -> dict:
         select(func.count()).select_from(Complaint).where(Complaint.has_conflict.is_(True))
     ) or 0
     disagreement_rate = round(conflicts / total, 3) if total else None
+    avg_verification_score = await db.scalar(
+        select(func.avg(PipelineComparison.verification_score)).where(PipelineComparison.verification_score.isnot(None))
+    )
 
     severity_distribution: dict[str, int] = {}
     for row in (
@@ -337,6 +340,7 @@ async def _intelligence_stats(db: AsyncSession) -> dict:
         "sla_breached": sla_breached,
         "manual_review_count": manual_review_count,
         "disagreement_rate": disagreement_rate,
+        "avg_verification_score": round(avg_verification_score, 3) if avg_verification_score is not None else None,
         "conflict_severity_distribution": severity_distribution,
         "top_policy_usage": dict(sorted(policy_usage.items(), key=lambda kv: kv[1], reverse=True)[:10]),
         "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
@@ -386,6 +390,7 @@ async def export_intelligence_report_pdf(db: AsyncSession) -> bytes:
         f"SLA breached: {stats['sla_breached']}",
         f"Manually reviewed (any reason): {stats['manual_review_count']}",
         f"Pipeline disagreement rate: {round(stats['disagreement_rate'] * 100)}%" if stats["disagreement_rate"] is not None else "Pipeline disagreement rate: n/a",
+        f"Average verification score: {round(stats['avg_verification_score'] * 100)}%" if stats["avg_verification_score"] is not None else "Average verification score: n/a",
     ])
 
     section("Category distribution", [

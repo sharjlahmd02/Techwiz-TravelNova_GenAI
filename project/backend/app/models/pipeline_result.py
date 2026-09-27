@@ -40,6 +40,7 @@ class PipelineResult(Base):
     suggested_response: Mapped[str | None] = mapped_column(Text, nullable=True)
     resolution_steps: Mapped[list | None] = mapped_column(JSONB, nullable=True)
     entities_extracted: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+    clarification_questions: Mapped[list | None] = mapped_column(JSONB, nullable=True)
 
     confidence_score: Mapped[float | None] = mapped_column(Float, nullable=True)
     processing_time_ms: Mapped[int | None] = mapped_column(Integer, nullable=True)

@@ -12,6 +12,8 @@ export interface ConflictResolution {
   rationale: string
 }
 
+export type ResponseTone = 'Professional' | 'Empathetic' | 'Concise' | 'Formal'
+
 export const reviewerApi = {
   listConflicts: (page = 1, pageSize = 20) =>
     api.get<PaginatedStaffComplaints>('/api/reviewer/conflicts', { params: { page, page_size: pageSize } }),
@@ -27,8 +29,8 @@ export const reviewerApi = {
   addComment: (id: string, comment: string) =>
     api.post<{ detail: string }>(`/api/reviewer/conflicts/${id}/comments`, { comment }),
 
-  regenerateResponse: (id: string) =>
-    api.post<{ suggested_response: string }>(`/api/reviewer/conflicts/${id}/regenerate-response`),
+  regenerateResponse: (id: string, tone: ResponseTone = 'Professional') =>
+    api.post<{ suggested_response: string }>(`/api/reviewer/conflicts/${id}/regenerate-response`, { tone }),
 
   history: (page = 1, pageSize = 20) =>
     api.get<PipelineComparisonSchema[]>('/api/reviewer/history', { params: { page, page_size: pageSize } }),

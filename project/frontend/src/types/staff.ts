@@ -50,6 +50,7 @@ export interface PipelineResultSchema {
   suggested_response: string | null
   confidence_score: number | null
   entities_extracted: EntitiesExtracted | null
+  clarification_questions: string[] | null
   policy_references: (string | PolicyReference)[] | null
   processing_time_ms: number | null
   provider: string | null
@@ -67,6 +68,7 @@ export interface PipelineComparisonSchema {
   genai_values: Record<string, unknown> | null
   ground_truth_values: Record<string, unknown> | null
   final_values: Record<string, unknown> | null
+  verification_score: number | null
   reviewer_rationale: string | null
   resolved_at: string | null
 }

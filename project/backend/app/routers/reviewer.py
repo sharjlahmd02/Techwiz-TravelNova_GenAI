@@ -10,6 +10,7 @@ from app.schemas.pipeline import (
     ConflictRejectSchema,
     ConflictResolutionSchema,
     PipelineComparisonSchema,
+    RegenerateResponseRequest,
     RegeneratedResponseSchema,
     ReviewerCommentSchema,
 )
@@ -92,6 +93,7 @@ async def add_comment(
 @router.post("/conflicts/{complaint_id}/regenerate-response", response_model=RegeneratedResponseSchema)
 async def regenerate_response(
     complaint_id: uuid.UUID,
+    data: RegenerateResponseRequest = RegenerateResponseRequest(),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_role("reviewer", "manager", "admin")),
 ):
@@ -99,7 +101,7 @@ async def regenerate_response(
     if complaint is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Complaint not found")
     service = ReviewerService(db)
-    new_response = await service.regenerate_response(complaint, current_user)
+    new_response = await service.regenerate_response(complaint, current_user, data.tone)
     return RegeneratedResponseSchema(suggested_response=new_response)
 
 

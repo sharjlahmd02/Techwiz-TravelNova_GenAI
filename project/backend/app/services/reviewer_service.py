@@ -13,7 +13,7 @@ from app.models.user import User
 from app.schemas.pipeline import ConflictResolutionSchema
 from app.services.complaint_service import apply_final_values, select_relevant_policies
 from app.services.genai.gemini_client import call_gemini
-from app.services.genai.prompt_builder import build_response_regeneration_prompt
+from app.services.genai.prompt_builder import DEFAULT_RESPONSE_TONE, build_response_regeneration_prompt
 from app.services.ground_truth.sla_calculator import calculate_sla
 from app.services.pipeline_comparator import COMPARED_FIELDS
 from app.services.staff_service import log_history
@@ -162,7 +162,7 @@ class ReviewerService:
         await log_history(self.db, complaint.id, HistoryAction.REVIEWER_COMMENT, reviewer.id, notes=comment)
         await self.db.commit()
 
-    async def regenerate_response(self, complaint: Complaint, reviewer: User) -> str:
+    async def regenerate_response(self, complaint: Complaint, reviewer: User, tone: str = DEFAULT_RESPONSE_TONE) -> str:
         comparison = await self.db.scalar(
             select(PipelineComparison).where(PipelineComparison.complaint_id == complaint.id)
         )
@@ -184,7 +184,7 @@ class ReviewerService:
             self.db, complaint.product_type, complaint.description, {"policy_references": []}
         )
         system_prompt, user_prompt = build_response_regeneration_prompt(
-            complaint.description, classification, policy_snippets
+            complaint.description, classification, policy_snippets, tone
         )
         result = await call_gemini(system_prompt, user_prompt, settings.GEMINI_API_KEY, settings.GEMINI_MODEL)
         if not result.success or not isinstance(result.data, dict) or not result.data.get("suggested_response"):
@@ -204,7 +204,8 @@ class ReviewerService:
             genai_result.suggested_response = new_response
 
         await log_history(
-            self.db, complaint.id, HistoryAction.RESPONSE_REGENERATED, reviewer.id, notes=new_response[:1000]
+            self.db, complaint.id, HistoryAction.RESPONSE_REGENERATED, reviewer.id,
+            notes=f"[{tone} tone] {new_response[:1000]}",
         )
         await self.db.commit()
         return new_response

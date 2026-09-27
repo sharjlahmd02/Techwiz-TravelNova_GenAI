@@ -157,3 +157,32 @@ def test_critical_urgency_with_real_safety_facts_not_flagged():
         POLICIES,
     )
     assert "unsupported_critical_urgency" not in result.issues
+
+
+def test_no_clarification_questions_by_default():
+    result = validate_response(_valid_raw(), "text", CATEGORIES, DEPARTMENTS, POLICIES)
+    assert result.data["clarification_questions"] == []
+    assert "missing_information" not in result.issues
+
+
+def test_clarification_questions_are_kept_and_flagged():
+    result = validate_response(
+        _valid_raw(clarification_questions=["What is your booking reference?", "  ", "When did this happen?"]),
+        "text",
+        CATEGORIES,
+        DEPARTMENTS,
+        POLICIES,
+    )
+    assert result.data["clarification_questions"] == ["What is your booking reference?", "When did this happen?"]
+    assert "missing_information" in result.issues
+
+
+def test_clarification_questions_are_capped():
+    result = validate_response(
+        _valid_raw(clarification_questions=[f"Question {i}?" for i in range(10)]),
+        "text",
+        CATEGORIES,
+        DEPARTMENTS,
+        POLICIES,
+    )
+    assert len(result.data["clarification_questions"]) == 3

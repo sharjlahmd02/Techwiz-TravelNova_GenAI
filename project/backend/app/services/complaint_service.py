@@ -235,6 +235,7 @@ async def _save_pipeline_result(db: AsyncSession, complaint_id: uuid.UUID, pipel
             prohibited_actions=result.get("prohibited_actions"),
             suggested_response=result.get("suggested_response"),
             entities_extracted=result.get("entities_extracted"),
+            clarification_questions=result.get("clarification_questions"),
             confidence_score=result.get("confidence"),
             processing_time_ms=result.get("processing_time_ms"),
             raw_output=result.get("raw_output") if pipeline == PipelineType.GENAI else None,
@@ -380,6 +381,7 @@ async def process_complaint(complaint_id: uuid.UUID) -> None:
                 genai_values=comparison.genai_values,
                 ground_truth_values=comparison.ground_truth_values,
                 final_values=comparison.final_values,
+                verification_score=comparison.verification_score,
             )
         )
 

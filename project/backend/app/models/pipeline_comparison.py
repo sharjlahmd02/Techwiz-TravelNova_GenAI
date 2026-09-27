@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, Enum, ForeignKey, Text
+from sqlalchemy import Boolean, DateTime, Enum, Float, ForeignKey, Text
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -26,6 +26,7 @@ class PipelineComparison(Base):
     genai_values: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
     ground_truth_values: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
     final_values: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+    verification_score: Mapped[float | None] = mapped_column(Float, nullable=True)
 
     reviewer_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id"), nullable=True)
     reviewer_rationale: Mapped[str | None] = mapped_column(Text, nullable=True)

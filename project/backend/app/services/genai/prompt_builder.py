@@ -7,7 +7,7 @@ departments); the user prompt is built fresh per complaint.
 # change in a way that could affect the model's output -- persisted per-analysis on
 # PipelineResult.prompt_version so a specific complaint's result can be traced back to
 # exactly which prompt version produced it (SRS req. liii).
-PROMPT_VERSION = "1.1"
+PROMPT_VERSION = "1.2"
 
 POLICY_APPLICABILITY_STATUSES = ["Applicable", "Conditionally Applicable", "Not Applicable", "Outdated"]
 
@@ -52,8 +52,22 @@ after) with exactly these fields:
     "flight_numbers": [string],
     "names": [string],
     "dates": [string]
-  }
+  },
+  "clarification_questions": [string]  // see MISSING INFORMATION RULE below. Empty array if
+                                        // the complaint has everything needed to act on it.
 }"""
+
+MISSING_INFORMATION_RULE = """MISSING INFORMATION RULE -- never invent a missing fact:
+- If the complaint is missing a detail you would genuinely need to resolve it (e.g. a refund
+  complaint with no booking reference or amount, a "my flight was delayed" complaint with no
+  date or flight number, a damage claim with no description of what was damaged), do NOT guess
+  or assume a plausible-sounding value for it. Still classify and prioritize using what IS
+  present -- just don't fabricate the missing specifics.
+- Instead, list 1-3 short, specific questions in "clarification_questions" that a human agent
+  could ask the customer to fill the gap, e.g. "What is your booking reference number?" or
+  "On what date did the delayed flight depart?". Leave it as an empty array if the complaint
+  already has enough detail to act on -- most complaints do, so don't manufacture questions for
+  their own sake."""
 
 SENTIMENT_URGENCY_RULES = """CRITICAL RULE -- sentiment and urgency are NEVER the same thing:
 - Urgency is determined ONLY by objective facts: safety risk, a stranded traveler, real
@@ -99,6 +113,8 @@ should handle it, and draft a professional response -- all as a single structure
 {SENTIMENT_URGENCY_RULES}
 
 {SECURITY_RULES}
+
+{MISSING_INFORMATION_RULE}
 
 Available categories and subcategories:
 {categories_block}
@@ -150,25 +166,41 @@ Available policies for this complaint:
 Respond with ONLY the JSON object described in the system prompt."""
 
 
+# SRS Step 33: response tone should be selectable. Scoped to the Reviewer's "Regenerate
+# response" action (see task.md 9.5.15) rather than a new per-department/per-complaint
+# setting -- a human is already in the loop deciding to regenerate, so letting them also
+# pick the tone for that redraft covers the requirement without a wider settings system.
+RESPONSE_TONES = {
+    "Professional": "clear, courteous, and businesslike -- the default TravelNova support tone",
+    "Empathetic": "warm and understanding, leading with acknowledgment of how the customer feels",
+    "Concise": "as brief as possible while still covering the necessary facts -- no filler",
+    "Formal": "formal register, no contractions, precise and measured",
+}
+DEFAULT_RESPONSE_TONE = "Professional"
+
+
 def build_response_regeneration_prompt(
     complaint_text: str,
     classification: dict,
     policy_snippets: list[dict],
+    tone: str = DEFAULT_RESPONSE_TONE,
 ) -> tuple[str, str]:
     """A narrower prompt for SRS Step 58's Reviewer "Regenerate response" action --
     the classification (category/priority/department/etc.) is already final at this
     point (a human reviewer settled it), so this only asks Gemini to (re)draft the
     customer-facing reply, not reclassify anything."""
+    tone_description = RESPONSE_TONES.get(tone, RESPONSE_TONES[DEFAULT_RESPONSE_TONE])
     system_prompt = f"""You are TravelNova's complaint response assistant. A human reviewer has
 already finalized this complaint's classification below -- do not reclassify it, only draft a
-professional, empathetic customer-facing reply consistent with that classification and the
-provided policies.
+customer-facing reply consistent with that classification and the provided policies.
+
+Tone: write in a {tone} tone -- {tone_description}.
 
 {SECURITY_RULES}
 
 Respond with ONLY a single JSON object (no markdown fences, no prose before or after):
 {{
-  "suggested_response": string   // a professional, empathetic reply to the customer
+  "suggested_response": string   // a reply to the customer in the tone specified above
 }}"""
 
     policies_block = "\n\n".join(

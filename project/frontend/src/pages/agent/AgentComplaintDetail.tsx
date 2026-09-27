@@ -138,6 +138,20 @@ export function AgentComplaintDetail() {
                   <dt className="text-xs text-[--text-muted]">Entities extracted</dt>
                   <dd className="mt-0.5"><EntitiesList entities={genai?.entities_extracted} /></dd>
                 </div>
+                {!!genai?.clarification_questions?.length && (
+                  <div className="col-span-2 rounded-md border border-[--status-yellow]/40 bg-[--status-yellow-bg] p-3">
+                    <dt className="mb-1 text-xs font-medium text-[--status-yellow]">
+                      Missing information -- consider asking the customer
+                    </dt>
+                    <dd className="text-[--text-primary]">
+                      <ul className="list-disc space-y-0.5 pl-4">
+                        {genai.clarification_questions.map((q) => (
+                          <li key={q}>{q}</li>
+                        ))}
+                      </ul>
+                    </dd>
+                  </div>
+                )}
                 {primary.suggested_response && (
                   <div className="col-span-2">
                     <dt className="text-xs text-[--text-muted]">Suggested response</dt>

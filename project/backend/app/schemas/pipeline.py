@@ -24,6 +24,7 @@ class PipelineResultSchema(BaseModel):
     suggested_response: str | None
     confidence_score: float | None
     entities_extracted: dict | None
+    clarification_questions: list | None
     policy_references: list | None
     processing_time_ms: int | None
     provider: str | None
@@ -43,6 +44,7 @@ class PipelineComparisonSchema(BaseModel):
     genai_values: dict | None
     ground_truth_values: dict | None
     final_values: dict | None
+    verification_score: float | None
     reviewer_rationale: str | None
     resolved_at: datetime | None
 
@@ -68,3 +70,7 @@ class ReviewerCommentSchema(BaseModel):
 
 class RegeneratedResponseSchema(BaseModel):
     suggested_response: str
+
+
+class RegenerateResponseRequest(BaseModel):
+    tone: str = "Professional"  # one of prompt_builder.RESPONSE_TONES; invalid values fall back silently

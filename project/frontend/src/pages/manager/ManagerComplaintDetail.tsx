@@ -152,6 +152,16 @@ export function ManagerComplaintDetail() {
                     <PolicyReferenceList references={r.policy_references} />
                   </div>
                 )}
+                {!!r.clarification_questions?.length && (
+                  <div className="mt-2 rounded-md border border-[--status-yellow]/40 bg-[--status-yellow-bg] p-2">
+                    <p className="mb-0.5 text-xs font-medium text-[--status-yellow]">Missing information</p>
+                    <ul className="list-disc space-y-0.5 pl-4 text-[--text-primary]">
+                      {r.clarification_questions.map((q) => (
+                        <li key={q}>{q}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
                 {(r.provider || r.model_name || r.prompt_version || r.policy_version) && (
                   <p className="mt-2 border-t border-[--zinc-100] pt-2 text-xs text-[--text-muted]">
                     {[
