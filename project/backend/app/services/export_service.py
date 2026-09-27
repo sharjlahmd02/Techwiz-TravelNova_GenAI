@@ -75,12 +75,35 @@ async def export_json(db: AsyncSession, department_id=None, date_from=None, date
 async def export_pdf(db: AsyncSession, department_id=None, date_from=None, date_to=None) -> bytes:
     complaints = await _fetch_complaints(db, department_id, date_from, date_to)
 
+    priority_counts: dict[str, int] = {}
+    status_counts: dict[str, int] = {}
+    conflict_count = 0
+    duplicate_count = 0
+    for c in complaints:
+        if c.priority:
+            priority_counts[c.priority.value] = priority_counts.get(c.priority.value, 0) + 1
+        status_counts[c.status.value] = status_counts.get(c.status.value, 0) + 1
+        if c.has_conflict:
+            conflict_count += 1
+        if c.is_duplicate:
+            duplicate_count += 1
+
     pdf = FPDF(orientation="L")
     pdf.add_page()
     pdf.set_font("Helvetica", "B", 14)
     pdf.cell(0, 10, "SupportNova Complaint Export", ln=True)
     pdf.set_font("Helvetica", "", 9)
     pdf.cell(0, 6, f"Generated {datetime.now().isoformat(timespec='seconds')} -- {len(complaints)} complaints", ln=True)
+    pdf.ln(2)
+
+    pdf.set_font("Helvetica", "B", 10)
+    pdf.cell(0, 6, "Summary", ln=True)
+    pdf.set_font("Helvetica", "", 8)
+    priority_line = "  ".join(f"{k}: {v}" for k, v in sorted(priority_counts.items())) or "none"
+    status_line = "  ".join(f"{k}: {v}" for k, v in sorted(status_counts.items())) or "none"
+    pdf.cell(0, 5, f"By priority -- {priority_line}", ln=True)
+    pdf.cell(0, 5, f"By status -- {status_line}", ln=True)
+    pdf.cell(0, 5, f"Pipeline conflicts: {conflict_count}   Duplicates flagged: {duplicate_count}", ln=True)
     pdf.ln(4)
 
     col_widths = [22, 55, 22, 18, 22, 14, 14, 30]

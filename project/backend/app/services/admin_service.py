@@ -353,6 +353,9 @@ class AdminService:
 
         for record in records:
             try:
+                if "@" not in record.email or not record.title.strip() or not record.description.strip():
+                    raise ValueError("invalid record: missing/malformed title, description, or email")
+
                 customer = await self.db.scalar(select(User).where(User.email == record.email))
                 if customer is None:
                     customer = User(

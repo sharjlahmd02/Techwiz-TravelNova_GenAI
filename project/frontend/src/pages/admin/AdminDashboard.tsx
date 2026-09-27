@@ -17,8 +17,14 @@ export function AdminDashboard() {
     adminApi.analytics().then(({ data }) => setAnalytics(data))
   }, [])
 
-  const download = (format: 'csv' | 'json' | 'pdf') => {
-    window.open(adminApi.exportUrl(format), '_blank')
+  const download = async (format: 'csv' | 'json' | 'pdf') => {
+    const { data } = await adminApi.export(format)
+    const url = URL.createObjectURL(data)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `complaints.${format}`
+    a.click()
+    URL.revokeObjectURL(url)
   }
 
   if (!analytics) {

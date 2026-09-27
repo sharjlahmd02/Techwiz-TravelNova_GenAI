@@ -61,7 +61,8 @@ export const adminApi = {
   analytics: () => api.get<AdminAnalytics>('/api/admin/analytics'),
 
   // Export
-  exportUrl: (format: 'csv' | 'json' | 'pdf') => `/api/admin/export?format=${format}`,
+  export: (format: 'csv' | 'json' | 'pdf') =>
+    api.get<Blob>('/api/admin/export', { params: { format }, responseType: 'blob' }),
 
   // Import
   importComplaints: (complaints: Record<string, unknown>[]) =>

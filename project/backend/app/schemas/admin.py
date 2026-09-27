@@ -227,7 +227,7 @@ class ImportComplaintRecord(BaseModel):
     title: str
     description: str
     customer_name: str
-    email: EmailStr
+    email: str
     product_type: str
     booking_reference: str | None = None
     customer_selected_category: str | None = None
