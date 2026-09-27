@@ -26,7 +26,7 @@ function TextureBackground() {
 function LogoLockup() {
   return (
     <div className="flex items-center justify-center">
-      <img src="/logo.png" alt="SupportNova" width={133} height={48} className="h-10 w-auto object-contain sm:h-12" />
+      <img src="/logo.png" alt="SupportNova" width={133} height={48} className="h-8 w-auto object-contain sm:h-9" />
     </div>
   )
 }
@@ -91,7 +91,7 @@ function PasswordField({
   const [visible, setVisible] = useState(false)
   return (
     <div>
-      <label htmlFor={id} className="mb-1.5 block text-sm font-medium text-[#0A0A0A]">
+      <label htmlFor={id} className="mb-1 block text-sm font-medium text-[#0A0A0A]">
         {label}
       </label>
       <div className="relative">
@@ -105,7 +105,7 @@ function PasswordField({
           placeholder={placeholder}
           aria-invalid={!!error}
           aria-describedby={error ? `${id}-error` : undefined}
-          className={`h-11 w-full rounded-lg border bg-white px-3.5 pr-11 text-sm text-[#0A0A0A] placeholder:text-zinc-400 transition-all duration-150 focus:outline-none ${
+          className={`h-10 w-full rounded-lg border bg-white px-3.5 pr-11 text-sm text-[#0A0A0A] placeholder:text-zinc-400 transition-all duration-150 focus:outline-none ${
             error
               ? 'border-[#DC2626] focus:shadow-[0_0_0_3px_rgba(220,38,38,0.10)]'
               : 'border-zinc-200 focus:border-[#0A0A0A] focus:shadow-[0_0_0_3px_rgba(10,10,10,0.08)]'
@@ -116,13 +116,13 @@ function PasswordField({
           tabIndex={0}
           onClick={() => setVisible((v) => !v)}
           aria-label={visible ? 'Hide password' : 'Show password'}
-          className="absolute right-1 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-md text-zinc-400 transition-colors hover:text-zinc-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0A0A0A]"
+          className="absolute right-1 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-md text-zinc-400 transition-colors hover:text-zinc-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0A0A0A]"
         >
           {visible ? <EyeOff className="h-[18px] w-[18px]" /> : <Eye className="h-[18px] w-[18px]" />}
         </button>
       </div>
       {error && (
-        <p id={`${id}-error`} role="alert" className="mt-1.5 flex items-center gap-1 text-xs text-[#DC2626]">
+        <p id={`${id}-error`} role="alert" className="mt-1 flex items-center gap-1 text-xs text-[#DC2626]">
           <AlertCircle className="h-3.5 w-3.5 shrink-0" />
           {error}
         </p>
@@ -182,20 +182,20 @@ export function LoginPage() {
   }
 
   return (
-    <div className="relative flex min-h-screen flex-col items-center justify-center bg-[#FAFAFA] px-4 py-10">
+    <div className="relative flex min-h-screen flex-col items-center justify-center bg-[#FAFAFA] px-4 py-3">
       <TextureBackground />
 
       <div className="relative z-10 w-full max-w-[440px]">
-        <div className="rounded-lg border border-zinc-200 bg-white p-7 shadow-[0_20px_40px_-12px_rgba(0,0,0,0.08)] sm:p-10">
+        <div className="rounded-lg border border-zinc-200 bg-white p-5 shadow-[0_20px_40px_-12px_rgba(0,0,0,0.08)] sm:p-6">
           <LogoLockup />
 
-          <div className="mt-9 text-center">
-            <h1 className="text-[26px] font-bold tracking-tight text-[#0A0A0A]">Welcome back</h1>
-            <p className="mt-2 text-sm text-zinc-500">Sign in to manage your complaints</p>
+          <div className="mt-3 text-center">
+            <h1 className="text-[22px] font-bold tracking-tight text-[#0A0A0A]">Welcome back</h1>
+            <p className="mt-1 text-sm text-zinc-500">Sign in to manage your complaints</p>
           </div>
 
           {serverError && (
-            <div role="alert" className="relative mt-6 rounded-lg border border-[#FECACA] bg-[#FEF2F2] px-4 py-3 pr-9 text-sm text-[#DC2626]">
+            <div role="alert" className="relative mt-3 rounded-lg border border-[#FECACA] bg-[#FEF2F2] px-4 py-2.5 pr-9 text-sm text-[#DC2626]">
               <div className="flex items-start gap-2">
                 <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
                 {serverError}
@@ -211,9 +211,9 @@ export function LoginPage() {
             </div>
           )}
 
-          <form className="mt-6 flex flex-col gap-4" onSubmit={handleSubmit} noValidate>
+          <form className="mt-3 flex flex-col gap-2.5" onSubmit={handleSubmit} noValidate>
             <div>
-              <label htmlFor="email" className="mb-1.5 block text-sm font-medium text-[#0A0A0A]">
+              <label htmlFor="email" className="mb-1 block text-sm font-medium text-[#0A0A0A]">
                 Email
               </label>
               <input
@@ -227,14 +227,14 @@ export function LoginPage() {
                 autoComplete="email"
                 aria-invalid={!!errors.email}
                 aria-describedby={errors.email ? 'email-error' : undefined}
-                className={`h-11 w-full rounded-lg border bg-white px-3.5 text-sm text-[#0A0A0A] placeholder:text-zinc-400 transition-all duration-150 focus:outline-none ${
+                className={`h-10 w-full rounded-lg border bg-white px-3.5 text-sm text-[#0A0A0A] placeholder:text-zinc-400 transition-all duration-150 focus:outline-none ${
                   errors.email
                     ? 'border-[#DC2626] focus:shadow-[0_0_0_3px_rgba(220,38,38,0.10)]'
                     : 'border-zinc-200 focus:border-[#0A0A0A] focus:shadow-[0_0_0_3px_rgba(10,10,10,0.08)]'
                 }`}
               />
               {errors.email && (
-                <p id="email-error" role="alert" className="mt-1.5 flex items-center gap-1 text-xs text-[#DC2626]">
+                <p id="email-error" role="alert" className="mt-1 flex items-center gap-1 text-xs text-[#DC2626]">
                   <AlertCircle className="h-3.5 w-3.5 shrink-0" />
                   {errors.email}
                 </p>
@@ -254,15 +254,15 @@ export function LoginPage() {
 
             <div className="flex items-center justify-between">
               <Checkbox id="remember-me" checked={rememberMe} onChange={setRememberMe} label="Remember me" />
-              <a href="#" className="text-sm text-[#2563EB] hover:underline">
+              {/* <a href="#" className="text-sm text-[#000] hover:underline">
                 Forgot password?
-              </a>
+              </a> */}
             </div>
 
             <button
               type="submit"
               disabled={loading}
-              className="mt-2 flex h-11 w-full items-center justify-center rounded-full bg-[#0A0A0A] text-sm font-semibold text-white transition-all duration-150 hover:bg-[#27272A] active:scale-[0.98] active:duration-100 disabled:cursor-not-allowed disabled:opacity-60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0A0A0A]"
+              className="mt-1 flex h-10 w-full items-center justify-center rounded-full bg-[#0A0A0A] text-sm font-semibold text-white transition-all duration-150 hover:bg-[#27272A] active:scale-[0.98] active:duration-100 disabled:cursor-not-allowed disabled:opacity-60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0A0A0A]"
             >
               {loading ? (
                 <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
@@ -275,7 +275,7 @@ export function LoginPage() {
             </button>
           </form>
 
-          <div className="my-6 flex items-center">
+          <div className="my-3 flex items-center">
             <div className="h-px flex-1 bg-zinc-200" />
             <span className="mx-3 text-xs text-zinc-400">or</span>
             <div className="h-px flex-1 bg-zinc-200" />
@@ -283,13 +283,13 @@ export function LoginPage() {
 
           <p className="text-center text-sm text-zinc-500">
             New customer?{' '}
-            <Link to="/register" className="font-medium text-[#2563EB] hover:underline">
-              Create an account →
+            <Link to="/register" className="font-medium text-[#000] hover:underline">
+              Create an account
             </Link>
           </p>
         </div>
 
-        <p className="mt-8 text-center text-xs text-zinc-400">
+        <p className="mt-3 text-center text-xs text-zinc-400">
           © 2026 TravelNova. All rights reserved. &nbsp;·&nbsp;{' '}
           <a href="#" className="hover:text-zinc-600 hover:underline">
             Terms

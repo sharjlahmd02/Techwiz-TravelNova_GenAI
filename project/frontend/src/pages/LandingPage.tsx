@@ -50,8 +50,8 @@ function Logo({ className = "" }: { className?: string }) {
       src="/logo.png"
       alt="SupportNova"
       width={111}
-      height={40}
-      className={`h-9 w-auto object-contain sm:h-10 ${className}`}
+      height={30}
+      className={`h-8 w-auto object-contain sm:h-14 ${className}`}
     />
   );
 }
@@ -491,7 +491,7 @@ export function LandingPage() {
 
           <div className="flex items-center gap-4">
             <PillButton
-              to="/register"
+              to="/login"
               variant="primary"
               className="hidden sm:inline-flex !rounded-full border border-black bg-black px-6 py-2.5 text-[13px] font-medium tracking-[0.02em] text-white"
             >
@@ -527,7 +527,7 @@ export function LandingPage() {
               ))}
             </nav>
             <PillButton
-              to="/register"
+              to="/login"
               variant="primary"
               className="mt-6 w-full !rounded-full border border-black bg-black px-6 py-3 text-[13px] font-medium tracking-[0.02em] text-white"
             >
@@ -586,7 +586,7 @@ export function LandingPage() {
               }`}
             >
               <PillButton
-                to="/register"
+                to="/login"
                 variant="primary"
                 className="!rounded-full px-8 py-3.5 text-[13px] font-medium tracking-[0.02em]"
               >
