@@ -56,6 +56,12 @@ class Complaint(Base):
     conflict_resolved_by: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id"), nullable=True)
     conflict_resolved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
+    # Set whenever this complaint is routed to a reviewer for a reason OTHER than (or in
+    # addition to) a pipeline field mismatch -- e.g. "missing_policy_support",
+    # "ambiguous_classification", "sensitive_complaint" (SRS Step 57). None if it was never
+    # flagged, or if it only ever went to review for a plain pipeline_conflict.
+    review_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
+
     sla_response_deadline: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     sla_resolution_deadline: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     sla_response_met: Mapped[bool | None] = mapped_column(Boolean, nullable=True)

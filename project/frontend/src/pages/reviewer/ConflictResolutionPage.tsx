@@ -10,6 +10,13 @@ import { reviewerApi, type ConflictFieldDecision } from '../../services/reviewer
 import { COMPARED_FIELDS } from '../../types/staff'
 import type { StaffComplaintDetail } from '../../types/staff'
 
+const REVIEW_REASON_LABELS: Record<string, string> = {
+  pipeline_conflict: 'The two pipelines disagreed on this complaint’s classification.',
+  sensitive_complaint: 'Flagged as sensitive -- safety or legal keywords were detected in the complaint text.',
+  ambiguous_classification: 'Flagged as ambiguous -- the ground-truth classifier had very low confidence.',
+  missing_policy_support: 'Flagged for missing policy support -- neither pipeline found a matching policy.',
+}
+
 const FIELD_LABELS: Record<string, string> = {
   category: 'Category',
   subcategory: 'Subcategory',
@@ -174,6 +181,13 @@ export function ConflictResolutionPage() {
         <div className="mb-4 rounded-md border border-p0-border bg-p0-bg px-4 py-3 text-sm text-p0-text">
           GenAI pipeline did not produce a result for this complaint (API failure). Only ground-truth and custom values
           are available below.
+        </div>
+      )}
+
+      {complaint.review_reason && complaint.review_reason !== 'pipeline_conflict' && (
+        <div className="mb-4 rounded-md border border-[--status-yellow]/40 bg-[--status-yellow-bg] px-4 py-3 text-sm text-[--status-yellow]">
+          {REVIEW_REASON_LABELS[complaint.review_reason] ?? `Flagged for review: ${complaint.review_reason}`}
+          {' '}Both pipelines agreed here -- there's nothing to compare below, just a sanity check to approve.
         </div>
       )}
 

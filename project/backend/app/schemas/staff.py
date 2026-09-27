@@ -24,6 +24,7 @@ class StaffComplaintSummary(BaseModel):
     urgency: Urgency | None
     department_id: uuid.UUID | None
     has_conflict: bool
+    review_reason: str | None = None
     is_duplicate: bool
     sla_response_deadline: datetime | None
     sla_resolution_deadline: datetime | None
@@ -67,6 +68,7 @@ class StaffComplaintDetail(BaseModel):
     duplicate_of: uuid.UUID | None
     is_prompt_injection: bool
     has_conflict: bool
+    review_reason: str | None = None
     sla_response_deadline: datetime | None
     sla_resolution_deadline: datetime | None
     satisfaction_rating: int | None

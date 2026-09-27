@@ -287,6 +287,39 @@ async def apply_final_values(db: AsyncSession, complaint: Complaint, final_value
     complaint.sla_resolution_deadline = sla[1]
 
 
+AMBIGUOUS_CONFIDENCE_THRESHOLD = 0.35
+
+
+def _additional_review_reason(gt_result: dict, genai_result: dict) -> str | None:
+    """SRS Step 57 lists review triggers beyond "the two pipelines disagree":
+    a sensitive complaint, an ambiguous classification, or no policy support
+    found at all. Checked in this priority order since only one reason is
+    stored (the most important one)."""
+    conditions = gt_result.get("conditions")
+    if conditions is not None and (
+        getattr(conditions, "has_safety_keywords", False) or getattr(conditions, "has_legal_keywords", False)
+    ):
+        return "sensitive_complaint"
+
+    if gt_result.get("confidence", 1.0) < AMBIGUOUS_CONFIDENCE_THRESHOLD:
+        return "ambiguous_classification"
+
+    gt_policies = gt_result.get("policy_references") or []
+    genai_ok = genai_result.get("status") == "ok"
+    genai_policies = genai_result.get("policy_references") or [] if genai_ok else None
+    if not gt_policies and (genai_policies is not None and not genai_policies):
+        return "missing_policy_support"
+
+    return None
+
+
+REVIEW_REASON_NOTES = {
+    "sensitive_complaint": "Flagged for manual review -- safety or legal keywords detected",
+    "ambiguous_classification": "Flagged for manual review -- ground-truth classification confidence too low",
+    "missing_policy_support": "Flagged for manual review -- no policy found to support either pipeline's analysis",
+}
+
+
 async def process_complaint(complaint_id: uuid.UUID) -> None:
     """Runs in the background after submission -- opens its own DB session
     since the request-scoped session is gone by the time this runs. A GenAI
@@ -350,14 +383,28 @@ async def process_complaint(complaint_id: uuid.UUID) -> None:
             )
         )
 
+        additional_reason = None if comparison.has_conflict else _additional_review_reason(gt_result, genai_result)
+
         old_status = complaint.status.value
         if comparison.has_conflict:
             complaint.status = ComplaintStatus.UNDER_REVIEW
             complaint.has_conflict = True
+            complaint.review_reason = "pipeline_conflict"
+        elif additional_reason:
+            # The two pipelines actually agree here -- nothing is in dispute -- so the
+            # computed values are applied as normal (a safety complaint should still show
+            # up correctly prioritized/departmentalized while it waits). UNDER_REVIEW just
+            # means a human should glance at it before it's worked, not that its
+            # classification is unresolved.
+            await apply_final_values(db, complaint, comparison.final_values, gt_result)
+            complaint.status = ComplaintStatus.UNDER_REVIEW
+            complaint.has_conflict = False
+            complaint.review_reason = additional_reason
         else:
             await apply_final_values(db, complaint, comparison.final_values, gt_result)
             complaint.status = ComplaintStatus.ASSIGNED
             complaint.has_conflict = False
+            complaint.review_reason = None
 
         complaint.is_duplicate = bool(gt_result.get("is_duplicate", False))
         if gt_result.get("duplicate_of"):
@@ -373,6 +420,13 @@ async def process_complaint(complaint_id: uuid.UUID) -> None:
             )
             complaint.supporting_department_id = supporting_dept.id if supporting_dept else None
 
+        if comparison.has_conflict:
+            history_notes = "Pipeline processing complete -- conflict, routed to reviewer"
+        elif additional_reason:
+            history_notes = f"Pipeline processing complete -- {REVIEW_REASON_NOTES[additional_reason]}"
+        else:
+            history_notes = "Pipeline processing complete -- pipelines agreed, auto-assigned"
+
         db.add(
             ComplaintHistory(
                 complaint_id=complaint.id,
@@ -380,11 +434,7 @@ async def process_complaint(complaint_id: uuid.UUID) -> None:
                 performed_by=None,
                 old_value={"status": old_status},
                 new_value={"status": complaint.status.value},
-                notes=(
-                    "Pipeline processing complete -- conflict, routed to reviewer"
-                    if comparison.has_conflict
-                    else "Pipeline processing complete -- pipelines agreed, auto-assigned"
-                ),
+                notes=history_notes,
             )
         )
 

@@ -9,6 +9,13 @@ import type { StaffComplaintSummary } from '../../types/staff'
 
 const PAGE_SIZE = 20
 
+const REASON_LABELS: Record<string, string> = {
+  pipeline_conflict: 'Pipeline conflict',
+  sensitive_complaint: 'Sensitive',
+  ambiguous_classification: 'Ambiguous',
+  missing_policy_support: 'No policy match',
+}
+
 export function ReviewerDashboard() {
   const navigate = useNavigate()
   const { show } = useToast()
@@ -45,6 +52,23 @@ export function ReviewerDashboard() {
           { header: 'ID', accessor: (c) => <span className="font-mono text-xs">{c.complaint_id}</span> },
           { header: 'Title', accessor: (c) => c.title, className: 'max-w-sm truncate' },
           { header: 'Product', accessor: (c) => c.product_type },
+          {
+            header: 'Reason',
+            accessor: (c) =>
+              c.review_reason ? (
+                <span
+                  className={
+                    c.review_reason === 'pipeline_conflict'
+                      ? 'text-xs text-p1-text'
+                      : 'text-xs text-[--status-yellow]'
+                  }
+                >
+                  {REASON_LABELS[c.review_reason] ?? c.review_reason}
+                </span>
+              ) : (
+                '—'
+              ),
+          },
           {
             header: 'Duplicate?',
             accessor: (c) => (c.is_duplicate ? <span className="text-xs text-[--status-yellow]">Possible dup</span> : '—'),

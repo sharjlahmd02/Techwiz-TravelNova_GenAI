@@ -10,6 +10,7 @@ export interface StaffComplaintSummary {
   urgency: Urgency | null
   department_id: string | null
   has_conflict: boolean
+  review_reason: string | null
   is_duplicate: boolean
   sla_response_deadline: string | null
   sla_resolution_deadline: string | null
@@ -22,6 +23,13 @@ export interface EntitiesExtracted {
   flight_numbers?: string[]
   names?: string[]
   dates?: string[]
+}
+
+export type PolicyApplicabilityStatus = 'Applicable' | 'Conditionally Applicable' | 'Not Applicable' | 'Outdated'
+
+export interface PolicyReference {
+  document_id: string
+  status: PolicyApplicabilityStatus
 }
 
 export interface PipelineResultSchema {
@@ -42,6 +50,7 @@ export interface PipelineResultSchema {
   suggested_response: string | null
   confidence_score: number | null
   entities_extracted: EntitiesExtracted | null
+  policy_references: (string | PolicyReference)[] | null
   processing_time_ms: number | null
   provider: string | null
   model_name: string | null
@@ -89,6 +98,7 @@ export interface StaffComplaintDetail {
   duplicate_of: string | null
   is_prompt_injection: boolean
   has_conflict: boolean
+  review_reason: string | null
   sla_response_deadline: string | null
   sla_resolution_deadline: string | null
   satisfaction_rating: number | null
