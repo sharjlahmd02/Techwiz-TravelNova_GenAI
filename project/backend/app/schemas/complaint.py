@@ -79,7 +79,10 @@ class ComplaintSummary(BaseModel):
 
 class ComplaintDetail(BaseModel):
     """Customer-facing detail -- deliberately excludes pipeline internals,
-    department assignment, conflict data, and agent notes (spec.md 2.1)."""
+    conflict data, and agent notes (spec.md 2.1). `department_name` is the one
+    exception: a plain display label (not the internal `Department` id/routing
+    rules/supporting department), since SRS Step 61 wants the customer to see
+    which team is handling their complaint (task.md 13.10)."""
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -93,6 +96,7 @@ class ComplaintDetail(BaseModel):
     priority: Priority | None
     urgency: Urgency | None
     preferred_contact_channel: PreferredContactChannel | None
+    department_name: str | None = None
     sla_response_deadline: datetime | None
     sla_resolution_deadline: datetime | None
     satisfaction_rating: int | None

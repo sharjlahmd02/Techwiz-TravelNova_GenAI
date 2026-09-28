@@ -70,6 +70,7 @@ export interface ComplaintDetail {
   priority: Priority | null
   urgency: Urgency | null
   preferred_contact_channel: PreferredContactChannel | null
+  department_name: string | null
   sla_response_deadline: string | null
   sla_resolution_deadline: string | null
   satisfaction_rating: number | null

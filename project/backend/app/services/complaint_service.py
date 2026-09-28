@@ -31,7 +31,7 @@ from app.models.knowledge_base_chunk import KnowledgeBaseChunk
 from app.models.pipeline_comparison import PipelineComparison
 from app.models.pipeline_result import PipelineResult
 from app.models.user import User
-from app.schemas.complaint import ComplaintCreate
+from app.schemas.complaint import ComplaintCreate, ComplaintDetail
 from app.services.genai.injection_detector import detect as detect_injection
 from app.services.pipeline_cache import get_pipelines
 from app.services.pipeline_comparator import compare_pipelines
@@ -129,6 +129,33 @@ class ComplaintService:
         await self.db.commit()
         await self.db.refresh(complaint)
         return complaint
+
+    async def to_customer_detail(self, complaint: Complaint) -> ComplaintDetail:
+        """Built explicitly (not via ComplaintDetail.model_validate(complaint)) because
+        department_name isn't a real column -- it's the one deliberate exception to
+        ComplaintDetail's "no internal pipeline data" rule (SRS Step 61 / task.md 13.10)."""
+        department_name = None
+        if complaint.department_id:
+            department = await self.db.get(Department, complaint.department_id)
+            department_name = department.name if department else None
+        return ComplaintDetail(
+            id=complaint.id,
+            complaint_id=complaint.complaint_id,
+            title=complaint.title,
+            description=complaint.description,
+            product_type=complaint.product_type,
+            booking_reference=complaint.booking_reference,
+            status=complaint.status,
+            priority=complaint.priority,
+            urgency=complaint.urgency,
+            preferred_contact_channel=complaint.preferred_contact_channel,
+            department_name=department_name,
+            sla_response_deadline=complaint.sla_response_deadline,
+            sla_resolution_deadline=complaint.sla_resolution_deadline,
+            satisfaction_rating=complaint.satisfaction_rating,
+            created_at=complaint.created_at,
+            closed_at=complaint.closed_at,
+        )
 
 
 async def _recent_complaints_for_customer(db: AsyncSession, customer_id: uuid.UUID, exclude_id: uuid.UUID) -> list[dict]:

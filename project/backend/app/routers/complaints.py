@@ -132,7 +132,8 @@ async def get_complaint(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_role("customer")),
 ):
-    return await _get_owned_complaint(complaint_id, db, current_user)
+    complaint = await _get_owned_complaint(complaint_id, db, current_user)
+    return await ComplaintService(db).to_customer_detail(complaint)
 
 
 @router.get("/{complaint_id}/status", response_model=ComplaintStatusResponse)
@@ -202,4 +203,5 @@ async def rate_satisfaction(
             detail="Can only rate a resolved or closed complaint",
         )
     service = ComplaintService(db)
-    return await service.rate_satisfaction(complaint, data.rating)
+    rated = await service.rate_satisfaction(complaint, data.rating)
+    return await service.to_customer_detail(rated)

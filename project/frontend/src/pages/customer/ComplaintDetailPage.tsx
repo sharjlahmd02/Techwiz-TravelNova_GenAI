@@ -123,6 +123,12 @@ export function ComplaintDetailPage() {
                   <dt>Submitted</dt>
                   <dd className="text-[#0A0A0A]">{new Date(complaint.created_at).toLocaleString()}</dd>
                 </div>
+                {complaint.department_name && (
+                  <div>
+                    <dt>Handled by</dt>
+                    <dd className="text-[#0A0A0A]">{complaint.department_name}</dd>
+                  </div>
+                )}
                 {complaint.preferred_contact_channel && (
                   <div>
                     <dt>Preferred contact</dt>
