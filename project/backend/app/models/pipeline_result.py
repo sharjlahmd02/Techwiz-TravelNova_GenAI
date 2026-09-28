@@ -42,6 +42,11 @@ class PipelineResult(Base):
     resolution_steps: Mapped[list | None] = mapped_column(JSONB, nullable=True)
     entities_extracted: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
     clarification_questions: Mapped[list | None] = mapped_column(JSONB, nullable=True)
+    # response_validator.py's ValidationResult.issues -- e.g. "low_confidence",
+    # "hallucinated_policy_reference", "unsupported_promise_language",
+    # "missing_required_action:'...'" (13.5). GenAI-only; None for ground-truth rows,
+    # which have no equivalent self-validation step (SRS Step 62 / task.md 13.9).
+    validation_issues: Mapped[list | None] = mapped_column(JSONB, nullable=True)
 
     confidence_score: Mapped[float | None] = mapped_column(Float, nullable=True)
     processing_time_ms: Mapped[int | None] = mapped_column(Integer, nullable=True)

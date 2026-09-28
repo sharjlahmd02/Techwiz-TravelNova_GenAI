@@ -261,6 +261,7 @@ async def _save_pipeline_result(db: AsyncSession, complaint_id: uuid.UUID, pipel
             suggested_response=result.get("suggested_response"),
             entities_extracted=result.get("entities_extracted"),
             clarification_questions=result.get("clarification_questions"),
+            validation_issues=result.get("validation_issues"),
             confidence_score=result.get("confidence"),
             processing_time_ms=result.get("processing_time_ms"),
             raw_output=result.get("raw_output") if pipeline == PipelineType.GENAI else None,

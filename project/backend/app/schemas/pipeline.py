@@ -28,6 +28,7 @@ class PipelineResultSchema(BaseModel):
     confidence_score: float | None
     entities_extracted: dict | None
     clarification_questions: list | None
+    validation_issues: list | None = None
     policy_references: list | None
     processing_time_ms: int | None
     provider: str | None

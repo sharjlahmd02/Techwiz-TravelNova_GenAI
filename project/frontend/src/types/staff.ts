@@ -56,6 +56,7 @@ export interface PipelineResultSchema {
   confidence_score: number | null
   entities_extracted: EntitiesExtracted | null
   clarification_questions: string[] | null
+  validation_issues: string[] | null
   policy_references: (string | PolicyReference)[] | null
   processing_time_ms: number | null
   provider: string | null

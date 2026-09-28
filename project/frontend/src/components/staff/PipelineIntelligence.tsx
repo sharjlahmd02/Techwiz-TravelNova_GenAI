@@ -49,6 +49,46 @@ export function EntitiesList({ entities }: { entities: EntitiesExtracted | null 
   )
 }
 
+function humanizeValidationIssue(issue: string): string {
+  const colonIndex = issue.indexOf(':')
+  if (colonIndex === -1) {
+    return issue.replace(/_/g, ' ').replace(/^./, (c) => c.toUpperCase())
+  }
+  const code = issue.slice(0, colonIndex).replace(/_/g, ' ').replace(/^./, (c) => c.toUpperCase())
+  const detail = issue.slice(colonIndex + 1).replace(/^'|'$/g, '')
+  return `${code}: ${detail}`
+}
+
+export function ValidationIssuesList({ issues }: { issues: string[] | null | undefined }) {
+  if (!issues?.length) return null
+  return (
+    <ul className="flex flex-wrap gap-1.5">
+      {issues.map((issue) => (
+        <li
+          key={issue}
+          className="inline-flex items-center rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700"
+        >
+          {humanizeValidationIssue(issue)}
+        </li>
+      ))}
+    </ul>
+  )
+}
+
+export const ESCALATION_LEVEL_LABELS: Record<number, string> = {
+  0: 'No Escalation',
+  1: 'Supervisor Review',
+  2: 'Department Manager',
+  3: 'Specialist Team',
+  4: 'Compliance Review',
+  5: 'Critical Management Escalation',
+}
+
+export function escalationLevelLabel(level: number | null | undefined): string {
+  if (level == null) return '—'
+  return ESCALATION_LEVEL_LABELS[level] ?? `Level ${level}`
+}
+
 export function PolicyReferenceList({ references }: { references: (string | PolicyReference)[] | null | undefined }) {
   if (!references?.length) return <span className="text-[--text-primary]">—</span>
   return (

@@ -7,7 +7,13 @@ import { Panel } from '../../components/ui/Card'
 import { FollowUpBadge } from '../../components/ui/FollowUpBadge'
 import { Input, Label, Select, Textarea } from '../../components/ui/Input'
 import { useToast } from '../../components/ui/Toast'
-import { EntitiesList, PolicyReferenceList, SentimentBadge } from '../../components/staff/PipelineIntelligence'
+import {
+  EntitiesList,
+  PolicyReferenceList,
+  SentimentBadge,
+  ValidationIssuesList,
+  escalationLevelLabel,
+} from '../../components/staff/PipelineIntelligence'
 import { managerApi } from '../../services/manager'
 import type { StaffComplaintDetail } from '../../types/staff'
 
@@ -192,6 +198,12 @@ export function ManagerComplaintDetail() {
                     </ul>
                   </div>
                 )}
+                {!!r.validation_issues?.length && (
+                  <div className="mt-2">
+                    <p className="mb-0.5 text-xs font-medium text-amber-700">Validation warnings</p>
+                    <ValidationIssuesList issues={r.validation_issues} />
+                  </div>
+                )}
                 {(r.provider || r.model_name || r.prompt_version || r.policy_version) && (
                   <p className="mt-2 border-t border-[--zinc-100] pt-2 text-xs text-[--text-muted]">
                     {[
@@ -237,7 +249,9 @@ export function ManagerComplaintDetail() {
               </div>
               <div>
                 <dt className="text-[--text-muted]">Escalation Level</dt>
-                <dd className="text-[--text-primary]">{complaint.escalation_level}</dd>
+                <dd className="text-[--text-primary]">
+                  {complaint.escalation_level} — {escalationLevelLabel(complaint.escalation_level)}
+                </dd>
               </div>
               {complaint.next_follow_up_at && (
                 <div>

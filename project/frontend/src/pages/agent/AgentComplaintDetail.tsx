@@ -7,7 +7,12 @@ import { Panel } from '../../components/ui/Card'
 import { Select, Textarea } from '../../components/ui/Input'
 import { FollowUpBadge } from '../../components/ui/FollowUpBadge'
 import { useToast } from '../../components/ui/Toast'
-import { EntitiesList, SentimentBadge } from '../../components/staff/PipelineIntelligence'
+import {
+  EntitiesList,
+  SentimentBadge,
+  ValidationIssuesList,
+  escalationLevelLabel,
+} from '../../components/staff/PipelineIntelligence'
 import { agentApi } from '../../services/agent'
 import type { StaffComplaintDetail } from '../../types/staff'
 import type { ComplaintStatus } from '../../types/complaint'
@@ -185,6 +190,12 @@ export function AgentComplaintDetail() {
                     </dd>
                   </div>
                 )}
+                {!!genai?.validation_issues?.length && (
+                  <div className="col-span-2">
+                    <dt className="mb-1 text-xs text-[--text-muted]">Validation warnings</dt>
+                    <dd><ValidationIssuesList issues={genai.validation_issues} /></dd>
+                  </div>
+                )}
                 {primary.suggested_response && (
                   <div className="col-span-2">
                     <dt className="text-xs text-[--text-muted]">Suggested response</dt>
@@ -271,6 +282,14 @@ export function AgentComplaintDetail() {
                 <div>
                   <dt className="text-[--text-muted]">Follow-up</dt>
                   <dd className="mt-0.5"><FollowUpBadge dueAt={complaint.next_follow_up_at} /></dd>
+                </div>
+              )}
+              {complaint.escalation_level > 0 && (
+                <div>
+                  <dt className="text-[--text-muted]">Escalation Level</dt>
+                  <dd className="text-[--text-primary]">
+                    {complaint.escalation_level} — {escalationLevelLabel(complaint.escalation_level)}
+                  </dd>
                 </div>
               )}
             </dl>
