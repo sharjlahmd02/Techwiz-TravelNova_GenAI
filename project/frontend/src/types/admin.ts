@@ -115,6 +115,8 @@ export interface AdminAnalytics {
   data_assets: Record<string, number>
   category_distribution: Record<string, number>
   priority_distribution: Record<string, number>
+  department_distribution: Record<string, number>
+  avg_resolution_hours: number | null
   category_trend: CategoryTrendPoint[]
   escalation_trend: WeekOverWeek
   volume_trend: WeekOverWeek

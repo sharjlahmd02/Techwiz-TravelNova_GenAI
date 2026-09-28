@@ -1,4 +1,5 @@
 import uuid
+from datetime import datetime, timezone
 
 from fastapi import HTTPException, status
 from sqlalchemy import func, or_, select
@@ -80,6 +81,13 @@ class ManagerService:
             new_value = data.value
 
         setattr(complaint, data.field, new_value)
+
+        if data.field == "status":
+            if new_value in CLOSED_STATUSES:
+                if complaint.closed_at is None:
+                    complaint.closed_at = datetime.now(timezone.utc)
+            else:
+                complaint.closed_at = None
 
         await log_history(
             self.db, complaint.id, HistoryAction.STATUS_CHANGED if data.field == "status" else HistoryAction.PRIORITY_CHANGED,

@@ -72,6 +72,11 @@ class AgentService:
                 complaint.sla_resolution_deadline is None or datetime.now(timezone.utc) <= complaint.sla_resolution_deadline
             )
 
+        # closed_at was defined on the model but never actually set anywhere -- needed
+        # for admin's resolution-time metric (task.md 13.11) to have any data at all.
+        if new_status == ComplaintStatus.RESOLVED and complaint.closed_at is None:
+            complaint.closed_at = datetime.now(timezone.utc)
+
         await log_history(
             self.db, complaint.id, HistoryAction.STATUS_CHANGED, agent.id,
             old_value={"status": old_status}, new_value={"status": new_status.value},

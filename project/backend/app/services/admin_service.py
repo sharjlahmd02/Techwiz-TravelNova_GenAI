@@ -352,12 +352,39 @@ class AdminService:
             if count:
                 priority_distribution[p.value] = count
 
+        department_distribution: dict[str, int] = {}
+        for row in (await self.db.execute(select(Department.name))).all():
+            (name,) = row
+            count = await self.db.scalar(
+                select(func.count())
+                .select_from(Complaint)
+                .join(Department, Complaint.department_id == Department.id)
+                .where(Department.name == name)
+            )
+            if count:
+                department_distribution[name] = count
+
         # SRS Step 65 wants trend detection ("rising delivery complaints," "escalation
         # spikes"), not just point-in-time snapshots -- a simple week-over-week delta
         # per category, plus overall volume and escalation trends.
         now = datetime.now(timezone.utc)
         week_start = now - timedelta(days=7)
         prev_week_start = now - timedelta(days=14)
+
+        # closed_at is only set once a complaint is actually Resolved/Closed (agent
+        # update_status / manager override) -- mean over complaints closed in the
+        # current 7-day window, same window as the trend metrics below (SRS Step 64).
+        closed_this_week = (
+            await self.db.scalars(
+                select(Complaint).where(Complaint.closed_at.isnot(None), Complaint.closed_at >= week_start)
+            )
+        ).all()
+        resolution_durations = [
+            (c.closed_at - c.created_at).total_seconds() / 3600 for c in closed_this_week if c.closed_at and c.created_at
+        ]
+        avg_resolution_hours = (
+            round(sum(resolution_durations) / len(resolution_durations), 2) if resolution_durations else None
+        )
 
         category_trend: list[CategoryTrendPoint] = []
         for row in (await self.db.execute(select(Category.name))).all():
@@ -406,6 +433,8 @@ class AdminService:
             data_assets=data_assets,
             category_distribution=category_distribution,
             priority_distribution=priority_distribution,
+            department_distribution=department_distribution,
+            avg_resolution_hours=avg_resolution_hours,
             category_trend=category_trend,
             escalation_trend=escalation_trend,
             volume_trend=volume_trend,

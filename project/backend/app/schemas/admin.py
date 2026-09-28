@@ -230,6 +230,8 @@ class AdminAnalytics(BaseModel):
     data_assets: dict[str, int]
     category_distribution: dict[str, int]
     priority_distribution: dict[str, int]
+    department_distribution: dict[str, int]
+    avg_resolution_hours: float | None
     category_trend: list[CategoryTrendPoint]
     escalation_trend: WeekOverWeek
     volume_trend: WeekOverWeek

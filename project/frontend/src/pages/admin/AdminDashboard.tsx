@@ -1,4 +1,4 @@
-import { CheckCircle2, FileStack, GitCompare, ShieldCheck, TrendingDown, TrendingUp } from 'lucide-react'
+import { CheckCircle2, Clock, FileStack, GitCompare, ShieldCheck, TrendingDown, TrendingUp } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { AppShell } from '../../components/layout/AppShell'
@@ -85,7 +85,7 @@ export function AdminDashboard() {
         </div>
       }
     >
-      <div className="mb-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
+      <div className="mb-6 grid grid-cols-2 gap-4 sm:grid-cols-5">
         <StatCard label="Total Complaints" value={analytics.total_complaints} icon={FileStack} />
         <StatCard label="Resolved Today" value={analytics.resolved_today} icon={CheckCircle2} />
         <StatCard label="Pipeline Conflicts" value={analytics.pipeline_conflicts} icon={GitCompare} />
@@ -93,6 +93,11 @@ export function AdminDashboard() {
           label="Pipeline Agreement"
           icon={ShieldCheck}
           value={analytics.pipeline_agreement_rate != null ? `${Math.round(analytics.pipeline_agreement_rate * 100)}%` : '—'}
+        />
+        <StatCard
+          label="Avg Resolution (7d)"
+          icon={Clock}
+          value={analytics.avg_resolution_hours != null ? `${analytics.avg_resolution_hours.toFixed(1)}h` : '—'}
         />
       </div>
 
@@ -108,7 +113,7 @@ export function AdminDashboard() {
         </div>
       </div>
 
-      <div className="mb-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
+      <div className="mb-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
         <Panel title="Category Distribution">
           <ResponsiveContainer width="100%" height={260}>
             <BarChart data={toChartData(analytics.category_distribution)} layout="vertical" margin={{ left: 40 }}>
@@ -133,6 +138,18 @@ export function AdminDashboard() {
                   <Cell key={entry.name} fill={PRIORITY_DOT[entry.name] ?? 'var(--zinc-400)'} />
                 ))}
               </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        </Panel>
+
+        <Panel title="Department Distribution">
+          <ResponsiveContainer width="100%" height={260}>
+            <BarChart data={toChartData(analytics.department_distribution)} layout="vertical" margin={{ left: 40 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" horizontal={false} />
+              <XAxis type="number" tick={{ fontSize: 11 }} />
+              <YAxis type="category" dataKey="name" tick={{ fontSize: 10 }} width={140} />
+              <Tooltip />
+              <Bar dataKey="value" fill="var(--zinc-800)" radius={[0, 4, 4, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </Panel>
