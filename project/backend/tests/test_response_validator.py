@@ -7,6 +7,7 @@ POLICIES = {"FLT-POL-14": "active"}
 
 def _valid_raw(**overrides):
     base = {
+        "summary": "Customer's flight was delayed and they want an update.",
         "category": "Flight Problems",
         "subcategory": "Flight Delay (1-3 hours)",
         "sentiment": "Negative",
@@ -220,6 +221,21 @@ def test_no_expected_actions_means_no_completeness_check():
         _valid_raw(required_actions=[]), "text", CATEGORIES, DEPARTMENTS, POLICIES, expected_required_actions=[]
     )
     assert not any("missing_required_action" in i for i in result.issues)
+
+
+def test_summary_passes_through():
+    result = validate_response(_valid_raw(), "text", CATEGORIES, DEPARTMENTS, POLICIES)
+    assert result.data["summary"] == "Customer's flight was delayed and they want an update."
+
+
+def test_missing_summary_defaults_to_none():
+    result = validate_response(_valid_raw(summary=None), "text", CATEGORIES, DEPARTMENTS, POLICIES)
+    assert result.data["summary"] is None
+
+
+def test_summary_is_truncated_to_max_length():
+    result = validate_response(_valid_raw(summary="x" * 1000), "text", CATEGORIES, DEPARTMENTS, POLICIES)
+    assert len(result.data["summary"]) == 400
 
 
 def test_all_required_actions_present_not_flagged():

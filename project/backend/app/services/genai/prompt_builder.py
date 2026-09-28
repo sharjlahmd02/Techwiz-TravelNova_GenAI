@@ -7,7 +7,7 @@ departments); the user prompt is built fresh per complaint.
 # change in a way that could affect the model's output -- persisted per-analysis on
 # PipelineResult.prompt_version so a specific complaint's result can be traced back to
 # exactly which prompt version produced it (SRS req. liii).
-PROMPT_VERSION = "1.3"
+PROMPT_VERSION = "1.4"
 
 POLICY_APPLICABILITY_STATUSES = ["Applicable", "Conditionally Applicable", "Not Applicable", "Outdated"]
 
@@ -15,6 +15,9 @@ OUTPUT_SCHEMA_DESCRIPTION = """Respond with ONLY a single JSON object (no markdo
 after) with exactly these fields:
 
 {
+  "summary": string,             // a short 1-2 sentence TL;DR of this complaint for an agent who
+                                  // hasn't read the full text yet -- what happened and what the
+                                  // customer wants, in plain language. Not a category label.
   "category": string,            // MUST be one of the provided categories, exactly as listed
   "subcategory": string,         // MUST be one of that category's subcategories, exactly as listed
   "primary_issue": string,       // short label for the main problem being reported, e.g. "Damaged Product"

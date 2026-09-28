@@ -37,6 +37,7 @@ export interface PolicyReference {
 export interface PipelineResultSchema {
   id: string
   pipeline: 'genai' | 'ground_truth'
+  summary: string | null
   category: string | null
   subcategory: string | null
   primary_issue: string | null

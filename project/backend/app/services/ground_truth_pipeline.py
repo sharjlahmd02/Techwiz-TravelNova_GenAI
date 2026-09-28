@@ -59,6 +59,8 @@ class GroundTruthPipeline:
         if rule and rule.get("follow_up") and rule.get("follow_up_days"):
             next_follow_up_at = submitted_at + timedelta(days=rule["follow_up_days"])
 
+        summary = self._build_extractive_summary(classification, conditions, escalation_required, duplicate)
+
         return {
             "category": classification.category,
             "subcategory": classification.subcategory,
@@ -84,6 +86,7 @@ class GroundTruthPipeline:
             "sla_response_deadline": sla.response_deadline,
             "sla_resolution_deadline": sla.resolution_deadline,
             "next_follow_up_at": next_follow_up_at,
+            "summary": summary,
             "provider": "ground_truth",
             "model": "keyword_classifier+rule_matcher+escalation_checker",
             "prompt_version": None,
@@ -114,3 +117,23 @@ class GroundTruthPipeline:
                 return bumped_priority, URGENCY_FOR_PRIORITY[bumped_priority]
 
         return base_priority, base_urgency
+
+    @staticmethod
+    def _build_extractive_summary(classification, conditions, escalation_required: bool, duplicate) -> str:
+        """No-AI fallback for SRS Step 44's agent-facing TL;DR, used when GenAI's own
+        `summary` is missing (a failed call, or an older/malformed response) -- built
+        purely from already-computed classification/condition facts, not a rewrite of
+        the complaint text."""
+        subject = classification.subcategory or classification.category or "an unclassified issue"
+        parts = [f"Customer reports {subject.lower()}."]
+        if conditions.has_safety_keywords or conditions.is_stranded:
+            parts.append("Flags a safety or stranded-traveler concern.")
+        if conditions.has_legal_keywords:
+            parts.append("Mentions legal action.")
+        if duplicate.repeat_after_resolution:
+            parts.append("Repeat of a previously resolved complaint.")
+        elif duplicate.is_duplicate:
+            parts.append("Possible duplicate of a recent complaint.")
+        if escalation_required:
+            parts.append("Requires escalation.")
+        return " ".join(parts)

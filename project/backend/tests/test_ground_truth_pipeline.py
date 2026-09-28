@@ -66,6 +66,22 @@ def test_caps_and_exclamations_never_influence_priority_directly(pipeline):
     assert calm_result["urgency"] == angry_result["urgency"]
 
 
+def test_extractive_summary_mentions_subcategory(pipeline):
+    result = pipeline.process(
+        "I was charged twice for booking TNV-12345, please refund the duplicate charge.",
+        metadata={"submitted_at": datetime(2026, 1, 5, 9, 0, tzinfo=timezone.utc)},
+    )
+    assert "duplicate charge" in result["summary"].lower()
+
+
+def test_extractive_summary_flags_safety_and_escalation(pipeline):
+    result = pipeline.process(
+        "Hello, I wanted to politely let you know there appears to be a gas leak smell in my hotel room.",
+        metadata={"submitted_at": datetime(2026, 1, 5, 9, 0, tzinfo=timezone.utc)},
+    )
+    assert "safety" in result["summary"].lower()
+
+
 def test_follow_up_date_set_when_matched_rule_requires_it(pipeline):
     """RULE-019 (Billing & Payments/Duplicate Charge) has follow_up=True, follow_up_days=3 --
     confirmed against the real seeded rule data (task.md 13.6)."""

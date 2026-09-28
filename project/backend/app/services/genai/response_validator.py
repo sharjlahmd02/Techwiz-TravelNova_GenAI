@@ -16,6 +16,7 @@ VALID_URGENCY = {"critical", "high", "medium", "low"}
 VALID_PRIORITY = {"P0", "P1", "P2", "P3"}
 CONFIDENCE_THRESHOLD = 0.5
 MAX_CLARIFICATION_QUESTIONS = 3
+MAX_SUMMARY_LENGTH = 400
 
 # "business day" isn't a real duration, but this is only used to sanity-check
 # a promised timeline against the SLA order of magnitude, not to schedule anything.
@@ -108,6 +109,9 @@ def validate_response(
 ) -> ValidationResult:
     issues: list[str] = []
     data: dict = {}
+
+    summary = raw.get("summary")
+    data["summary"] = summary.strip()[:MAX_SUMMARY_LENGTH] if isinstance(summary, str) and summary.strip() else None
 
     category = raw.get("category")
     if category not in valid_categories:

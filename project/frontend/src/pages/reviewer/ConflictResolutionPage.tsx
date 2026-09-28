@@ -180,6 +180,11 @@ export function ConflictResolutionPage() {
           {complaint.customer_selected_category ?? 'No self-selected category'} · {complaint.product_type} · Received{' '}
           {new Date(complaint.created_at).toLocaleString()}
         </p>
+        {(genaiResult?.summary || groundTruthResult?.summary) && (
+          <p className="mt-2 rounded-md border border-[--border] bg-[--surface] px-3 py-2 text-sm italic text-[--text-secondary]">
+            {genaiResult?.summary || groundTruthResult?.summary}
+          </p>
+        )}
         <p className="mt-2 whitespace-pre-wrap text-sm text-[--text-primary]">{complaint.description}</p>
       </div>
 

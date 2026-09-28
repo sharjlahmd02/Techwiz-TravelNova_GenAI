@@ -9,6 +9,7 @@ class PipelineResultSchema(BaseModel):
 
     id: uuid.UUID
     pipeline: str
+    summary: str | None = None
     category: str | None
     subcategory: str | None
     primary_issue: str | None

@@ -17,6 +17,7 @@ class PipelineResult(Base):
     complaint_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("complaints.id"), nullable=False, index=True)
     pipeline: Mapped[PipelineType] = mapped_column(Enum(PipelineType, name="pipeline_type"), nullable=False)
 
+    summary: Mapped[str | None] = mapped_column(Text, nullable=True)
     category: Mapped[str | None] = mapped_column(String(255), nullable=True)
     subcategory: Mapped[str | None] = mapped_column(String(255), nullable=True)
     primary_issue: Mapped[str | None] = mapped_column(String(255), nullable=True)

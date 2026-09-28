@@ -81,6 +81,10 @@ export function ManagerComplaintDetail() {
     )
   }
 
+  const genai = complaint.pipeline_results.find((r) => r.pipeline === 'genai')
+  const groundTruth = complaint.pipeline_results.find((r) => r.pipeline === 'ground_truth')
+  const summary = genai?.summary || groundTruth?.summary
+
   return (
     <AppShell title={complaint.complaint_id} actions={<Button variant="ghost" onClick={() => navigate(-1)}>← Back</Button>}>
       <Panel title="Override">
@@ -114,6 +118,11 @@ export function ManagerComplaintDetail() {
               {complaint.has_conflict && <span className="text-xs font-medium text-p0-text">Pipeline conflict</span>}
             </div>
             <h2 className="mb-2 text-lg font-medium text-[--text-primary]">{complaint.title}</h2>
+            {summary && (
+              <p className="mb-3 rounded-md border border-[--border] bg-[--zinc-50] px-3 py-2 text-sm italic text-[--text-secondary]">
+                {summary}
+              </p>
+            )}
             <p className="whitespace-pre-wrap text-sm text-[--text-primary]">{complaint.description}</p>
             <p className="mt-3 text-xs text-[--text-muted]">
               Department: <span className="text-[--text-primary]">{complaint.department_name ?? '—'}</span>

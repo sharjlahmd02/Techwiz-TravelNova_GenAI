@@ -240,6 +240,7 @@ async def _save_pipeline_result(db: AsyncSession, complaint_id: uuid.UUID, pipel
         PipelineResult(
             complaint_id=complaint_id,
             pipeline=pipeline,
+            summary=result.get("summary"),
             category=result.get("category"),
             subcategory=result.get("subcategory"),
             primary_issue=result.get("primary_issue"),
