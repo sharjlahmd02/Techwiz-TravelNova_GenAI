@@ -123,6 +123,18 @@ export function ComplaintDetailPage() {
                   <dt>Submitted</dt>
                   <dd className="text-[#0A0A0A]">{new Date(complaint.created_at).toLocaleString()}</dd>
                 </div>
+                {complaint.preferred_contact_channel && (
+                  <div>
+                    <dt>Preferred contact</dt>
+                    <dd className="text-[#0A0A0A]">
+                      {complaint.preferred_contact_channel === 'sms'
+                        ? 'SMS'
+                        : complaint.preferred_contact_channel === 'email'
+                          ? 'Email'
+                          : 'Phone'}
+                    </dd>
+                  </div>
+                )}
               </dl>
             </Card>
 

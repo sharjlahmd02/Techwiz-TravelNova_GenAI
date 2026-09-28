@@ -16,6 +16,7 @@ export type ComplaintStatus =
 export type Priority = 'P0' | 'P1' | 'P2' | 'P3'
 export type Urgency = 'critical' | 'high' | 'medium' | 'low'
 export type MessageSender = 'customer' | 'agent' | 'system'
+export type PreferredContactChannel = 'email' | 'phone' | 'sms'
 
 export interface ComplaintCreate {
   title: string
@@ -23,6 +24,8 @@ export interface ComplaintCreate {
   product_type: string
   booking_reference?: string | null
   customer_selected_category?: string | null
+  previous_complaint_reference?: string | null
+  preferred_contact_channel?: PreferredContactChannel | null
   channel?: ComplaintChannel
   source_payload?: Record<string, unknown> | null
 }
@@ -66,6 +69,7 @@ export interface ComplaintDetail {
   status: ComplaintStatus
   priority: Priority | null
   urgency: Urgency | null
+  preferred_contact_channel: PreferredContactChannel | null
   sla_response_deadline: string | null
   sla_resolution_deadline: string | null
   satisfaction_rating: number | null

@@ -2,7 +2,7 @@ import { FileText, Upload } from 'lucide-react'
 import { useRef, useState } from 'react'
 import { complaintsApi } from '../../../services/complaints'
 import type { ComplaintCreateResponse, ComplaintFieldsDraft } from '../../../types/complaint'
-import { DraftReview } from './DraftReview'
+import { DraftReview, type DraftSubmitExtras } from './DraftReview'
 
 const ACCEPTED = '.pdf,.docx'
 const ACCEPTED_EXTENSIONS = ['.pdf', '.docx']
@@ -55,13 +55,14 @@ export function DocumentFlow({ onSubmitted }: { onSubmitted: (result: ComplaintC
     }
   }
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (extras: DraftSubmitExtras) => {
     if (!draft || !file) return
     setSubmitting(true)
     setError(null)
     try {
       const { data } = await complaintsApi.create({
         ...draft,
+        ...extras,
         channel: 'document',
         source_payload: { type: 'document', filename: file.name, extracted_text: extractedText },
       })

@@ -6,7 +6,9 @@ import { Button } from '../../../components/ui/Button'
 import { FieldError, Input, Label, Textarea } from '../../../components/ui/Input'
 import { complaintsApi } from '../../../services/complaints'
 import { PRODUCT_TYPES } from '../../../types/complaint'
-import type { ComplaintCreateResponse } from '../../../types/complaint'
+import type { ComplaintCreateResponse, PreferredContactChannel } from '../../../types/complaint'
+import { PreviousComplaintSelect } from './PreviousComplaintSelect'
+import { ContactChannelSelect } from './ContactChannelSelect'
 
 const schema = z.object({
   product_type: z.string().min(1, 'Choose a service type'),
@@ -20,6 +22,8 @@ type FormData = z.infer<typeof schema>
 export function WebFormFlow({ onSubmitted }: { onSubmitted: (result: ComplaintCreateResponse) => void }) {
   const [step, setStep] = useState<0 | 1>(0)
   const [submitError, setSubmitError] = useState<string | null>(null)
+  const [previousComplaintReference, setPreviousComplaintReference] = useState<string | null>(null)
+  const [preferredContactChannel, setPreferredContactChannel] = useState<PreferredContactChannel | null>(null)
 
   const {
     register,
@@ -43,6 +47,8 @@ export function WebFormFlow({ onSubmitted }: { onSubmitted: (result: ComplaintCr
       const { data: response } = await complaintsApi.create({
         ...data,
         booking_reference: data.booking_reference || null,
+        previous_complaint_reference: previousComplaintReference,
+        preferred_contact_channel: preferredContactChannel,
         channel: 'web_form',
       })
       onSubmitted(response)
@@ -126,6 +132,11 @@ export function WebFormFlow({ onSubmitted }: { onSubmitted: (result: ComplaintCr
           </div>
         )}
       </dl>
+
+      <div className="mt-5 space-y-4">
+        <PreviousComplaintSelect value={previousComplaintReference} onChange={setPreviousComplaintReference} />
+        <ContactChannelSelect value={preferredContactChannel} onChange={setPreferredContactChannel} />
+      </div>
 
       {submitError && <p className="mt-4 text-sm text-p0-text">{submitError}</p>}
 

@@ -3,7 +3,7 @@ from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from app.models.enums import ComplaintChannel, ComplaintStatus, Priority, Urgency
+from app.models.enums import ComplaintChannel, ComplaintStatus, PreferredContactChannel, Priority, Urgency
 
 
 class ComplaintCreate(BaseModel):
@@ -12,6 +12,14 @@ class ComplaintCreate(BaseModel):
     product_type: str = Field(min_length=1, max_length=50)
     booking_reference: str | None = Field(default=None, max_length=20)
     customer_selected_category: str | None = Field(default=None, max_length=255)
+    previous_complaint_reference: str | None = Field(
+        default=None,
+        max_length=20,
+        description="The customer-facing complaint_id (e.g. CMP-00123) of an earlier complaint "
+        "this one relates to. Resolved server-side; silently ignored if it doesn't belong to "
+        "the submitting customer.",
+    )
+    preferred_contact_channel: PreferredContactChannel | None = None
     channel: ComplaintChannel = ComplaintChannel.WEB_FORM
     source_payload: dict | None = Field(
         default=None,
@@ -84,6 +92,7 @@ class ComplaintDetail(BaseModel):
     status: ComplaintStatus
     priority: Priority | None
     urgency: Urgency | None
+    preferred_contact_channel: PreferredContactChannel | None
     sla_response_deadline: datetime | None
     sla_resolution_deadline: datetime | None
     satisfaction_rating: int | None

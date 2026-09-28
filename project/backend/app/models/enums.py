@@ -93,3 +93,9 @@ class KnowledgeBaseStatus(str, enum.Enum):
     PREVIOUS = "previous"
     SUPERSEDED = "superseded"
     DRAFT = "draft"
+
+
+class PreferredContactChannel(str, enum.Enum):
+    EMAIL = "email"
+    PHONE = "phone"
+    SMS = "sms"

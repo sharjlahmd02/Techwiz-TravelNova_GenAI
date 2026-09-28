@@ -48,6 +48,19 @@ class ComplaintService:
     async def create_complaint(self, data: ComplaintCreate, user: User) -> Complaint:
         injection = detect_injection(data.description)
 
+        previous_complaint_id = None
+        if data.previous_complaint_reference:
+            # Silently ignored (not a validation error) if it doesn't resolve to a complaint
+            # the submitting customer actually owns -- this is a convenience link, not a
+            # security-sensitive lookup, so no error is raised either way.
+            previous = await self.db.scalar(
+                select(Complaint).where(
+                    Complaint.complaint_id == data.previous_complaint_reference.strip(),
+                    Complaint.customer_id == user.id,
+                )
+            )
+            previous_complaint_id = previous.id if previous else None
+
         complaint = Complaint(
             complaint_id=await next_complaint_id(self.db),
             customer_id=user.id,
@@ -57,6 +70,8 @@ class ComplaintService:
             product_type=data.product_type,
             booking_reference=data.booking_reference,
             customer_selected_category=data.customer_selected_category,
+            previous_complaint_id=previous_complaint_id,
+            preferred_contact_channel=data.preferred_contact_channel,
             status=ComplaintStatus.SUBMITTED,
             is_prompt_injection=injection.is_injection,
             attachments=[data.source_payload] if data.source_payload else None,

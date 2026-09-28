@@ -6,7 +6,7 @@ from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
-from app.models.enums import ComplaintChannel, ComplaintStatus, Priority, Urgency
+from app.models.enums import ComplaintChannel, ComplaintStatus, PreferredContactChannel, Priority, Urgency
 from app.utils.datetime import new_uuid, utcnow
 
 
@@ -25,6 +25,14 @@ class Complaint(Base):
     product_type: Mapped[str] = mapped_column(String(50), nullable=False)
     booking_reference: Mapped[str | None] = mapped_column(String(20), nullable=True, index=True)
     customer_selected_category: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    # Customer-declared link to an earlier complaint they consider related (SRS Step 9) --
+    # distinct from `duplicate_of`, which is the system's own similarity-based detection.
+    previous_complaint_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("complaints.id"), nullable=True
+    )
+    preferred_contact_channel: Mapped[PreferredContactChannel | None] = mapped_column(
+        Enum(PreferredContactChannel, name="preferred_contact_channel"), nullable=True
+    )
 
     status: Mapped[ComplaintStatus] = mapped_column(
         Enum(ComplaintStatus, name="complaint_status"),

@@ -2,7 +2,7 @@ import { Send } from 'lucide-react'
 import { useState } from 'react'
 import { complaintsApi } from '../../../services/complaints'
 import type { ComplaintCreateResponse, ComplaintFieldsDraft } from '../../../types/complaint'
-import { DraftReview } from './DraftReview'
+import { DraftReview, type DraftSubmitExtras } from './DraftReview'
 
 interface ChatMessage {
   sender: 'bot' | 'user'
@@ -72,13 +72,14 @@ export function ChatFlow({ onSubmitted }: { onSubmitted: (result: ComplaintCreat
     }
   }
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (extras: DraftSubmitExtras) => {
     if (!draft) return
     setSubmitting(true)
     setError(null)
     try {
       const { data } = await complaintsApi.create({
         ...draft,
+        ...extras,
         channel: 'chat',
         source_payload: { type: 'chat_transcript', messages },
       })

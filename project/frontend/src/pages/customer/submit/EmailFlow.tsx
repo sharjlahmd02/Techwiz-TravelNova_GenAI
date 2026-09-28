@@ -4,7 +4,7 @@ import { Button } from '../../../components/ui/Button'
 import { Input, Label, Textarea } from '../../../components/ui/Input'
 import { complaintsApi } from '../../../services/complaints'
 import type { ComplaintCreateResponse, ComplaintFieldsDraft } from '../../../types/complaint'
-import { DraftReview } from './DraftReview'
+import { DraftReview, type DraftSubmitExtras } from './DraftReview'
 
 export function EmailFlow({ onSubmitted }: { onSubmitted: (result: ComplaintCreateResponse) => void }) {
   const { user } = useAuth()
@@ -31,13 +31,14 @@ export function EmailFlow({ onSubmitted }: { onSubmitted: (result: ComplaintCrea
     }
   }
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (extras: DraftSubmitExtras) => {
     if (!draft) return
     setSubmitting(true)
     setError(null)
     try {
       const { data } = await complaintsApi.create({
         ...draft,
+        ...extras,
         channel: 'email',
         source_payload: { type: 'email', from_email: fromEmail, subject, body },
       })
