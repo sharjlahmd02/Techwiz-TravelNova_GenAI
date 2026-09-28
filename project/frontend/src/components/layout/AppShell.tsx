@@ -81,10 +81,10 @@ export function AppShell({ title, actions, children }: { title: string; actions?
   if (!user) return null
   const sections = NAV_BY_ROLE[user.role] ?? []
 
-  const handleSignOut = () => {
-    logout()
-    navigate('/login')
-  }
+ const handleSignOut = () => {
+  navigate('/')
+  logout()
+}
 
   return (
     <div className="flex h-screen overflow-hidden bg-[#FAFAFA]">

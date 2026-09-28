@@ -29,10 +29,10 @@ export function CustomerShell({ title, actions, children }: { title: string; act
   const navigate = useNavigate()
   const [confirmOpen, setConfirmOpen] = useState(false)
 
-  const handleSignOut = () => {
-    logout()
-    navigate('/login')
-  }
+ const handleSignOut = () => {
+  navigate('/')
+  logout()
+}
 
   return (
     <div className="flex h-screen overflow-hidden bg-[#FAFAFA]">

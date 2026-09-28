@@ -23,7 +23,7 @@ export function UnauthorizedPage() {
 
   const handleSignOut = () => {
     logout()
-    navigate('/login')
+    navigate('/')
   }
 
   return (

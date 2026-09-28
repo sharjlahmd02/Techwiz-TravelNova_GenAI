@@ -176,6 +176,15 @@ function MiniBarList() {
   );
 }
 
+// user guide
+const handleDownloadPdf = () => {
+  // Construct the direct download link using the Google Drive File ID
+  const downloadUrl = `https://drive.google.com/file/d/1oGrd7Zs_lp18As0GRyEqc3pAzPNEwkvR/view?usp=sharing`;
+
+  // 'noopener,noreferrer' prevents security vulnerabilities from open tabs
+  window.open(downloadUrl, "_blank", "noopener,noreferrer");
+};
+
 function MiniLineChart() {
   return (
     <div className="relative mt-6">
@@ -646,11 +655,11 @@ export function LandingPage() {
                 Submit Complaint
               </PillButton>
               <PillButton
-                to="/login"
+                onClick={handleDownloadPdf}
                 variant="outline"
                 className="!rounded-full px-8 py-3.5 text-[13px] font-medium tracking-[0.02em]"
               >
-                Track My Complaint <ChevronRight className="h-4 w-4" />
+                Read This First <ChevronRight className="h-4 w-4" />
               </PillButton>
             </div>
           </div>
