@@ -161,6 +161,30 @@ export function AgentComplaintDetail() {
                     </dd>
                   </div>
                 )}
+                {!!primary.required_actions?.length && (
+                  <div className="col-span-2 rounded-md border border-[--status-green]/40 bg-[--status-green-bg] p-3">
+                    <dt className="mb-1 text-xs font-medium text-[--status-green]">Required actions</dt>
+                    <dd className="text-[--text-primary]">
+                      <ul className="list-disc space-y-0.5 pl-4">
+                        {primary.required_actions.map((a) => (
+                          <li key={a}>{a}</li>
+                        ))}
+                      </ul>
+                    </dd>
+                  </div>
+                )}
+                {!!primary.prohibited_actions?.length && (
+                  <div className="col-span-2 rounded-md border border-p0-border bg-p0-bg p-3">
+                    <dt className="mb-1 text-xs font-medium text-p0-text">Do not</dt>
+                    <dd className="text-[--text-primary]">
+                      <ul className="list-disc space-y-0.5 pl-4">
+                        {primary.prohibited_actions.map((a) => (
+                          <li key={a}>{a}</li>
+                        ))}
+                      </ul>
+                    </dd>
+                  </div>
+                )}
                 {primary.suggested_response && (
                   <div className="col-span-2">
                     <dt className="text-xs text-[--text-muted]">Suggested response</dt>

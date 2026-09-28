@@ -50,6 +50,8 @@ export interface PipelineResultSchema {
   escalation_level: number
   refund_eligible: boolean
   compensation_eligible: boolean
+  required_actions: string[] | null
+  prohibited_actions: string[] | null
   suggested_response: string | null
   confidence_score: number | null
   entities_extracted: EntitiesExtracted | null

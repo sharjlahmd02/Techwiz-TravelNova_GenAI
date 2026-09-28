@@ -22,6 +22,8 @@ class PipelineResultSchema(BaseModel):
     escalation_level: int
     refund_eligible: bool
     compensation_eligible: bool
+    required_actions: list | None = None
+    prohibited_actions: list | None = None
     suggested_response: str | None
     confidence_score: float | None
     entities_extracted: dict | None

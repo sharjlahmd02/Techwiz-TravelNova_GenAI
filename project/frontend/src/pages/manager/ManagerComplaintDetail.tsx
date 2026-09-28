@@ -172,6 +172,26 @@ export function ManagerComplaintDetail() {
                     </ul>
                   </div>
                 )}
+                {!!r.required_actions?.length && (
+                  <div className="mt-2 rounded-md border border-[--status-green]/40 bg-[--status-green-bg] p-2">
+                    <p className="mb-0.5 text-xs font-medium text-[--status-green]">Required actions</p>
+                    <ul className="list-disc space-y-0.5 pl-4 text-[--text-primary]">
+                      {r.required_actions.map((a) => (
+                        <li key={a}>{a}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {!!r.prohibited_actions?.length && (
+                  <div className="mt-2 rounded-md border border-p0-border bg-p0-bg p-2">
+                    <p className="mb-0.5 text-xs font-medium text-p0-text">Do not</p>
+                    <ul className="list-disc space-y-0.5 pl-4 text-[--text-primary]">
+                      {r.prohibited_actions.map((a) => (
+                        <li key={a}>{a}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
                 {(r.provider || r.model_name || r.prompt_version || r.policy_version) && (
                   <p className="mt-2 border-t border-[--zinc-100] pt-2 text-xs text-[--text-muted]">
                     {[
