@@ -141,7 +141,12 @@ async def _recent_complaints_for_customer(db: AsyncSession, customer_id: uuid.UU
         )
     )
     return [
-        {"complaint_id": c.complaint_id, "description": c.description, "booking_reference": c.booking_reference}
+        {
+            "complaint_id": c.complaint_id,
+            "description": c.description,
+            "booking_reference": c.booking_reference,
+            "status": c.status.value,
+        }
         for c in result.scalars().all()
     ]
 

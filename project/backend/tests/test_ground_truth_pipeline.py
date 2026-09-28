@@ -84,3 +84,58 @@ def test_classified_complaint_carries_matched_rule(pipeline):
     assert result["category"] == "Billing & Payments"
     assert result["matched_rule_ids"] != []
     assert result["department"].startswith("DEPT-")
+
+
+def test_repeat_of_resolved_complaint_bumps_priority_and_escalates(pipeline):
+    """SRS Steps 21/54: a repeat of an already-Resolved complaint is a tricky priority
+    case -- the first resolution attempt evidently failed -- and should escalate one
+    level, purely from the objective repeat-after-resolution fact, not tone."""
+    text = "I was charged twice for booking TNV-12345, please refund the duplicate charge."
+    baseline = pipeline.process(text, metadata={"submitted_at": datetime(2026, 1, 5, 9, 0, tzinfo=timezone.utc)})
+
+    repeat = pipeline.process(
+        text,
+        metadata={
+            "submitted_at": datetime(2026, 1, 12, 9, 0, tzinfo=timezone.utc),
+            "recent_complaints": [
+                {
+                    "complaint_id": "CMP-00100",
+                    "description": text,
+                    "booking_reference": None,
+                    "status": "resolved",
+                }
+            ],
+        },
+    )
+
+    assert repeat["is_duplicate"] is True
+    priority_rank = {"P0": 0, "P1": 1, "P2": 2, "P3": 3}
+    assert priority_rank[repeat["priority"]] < priority_rank[baseline["priority"]]
+    assert repeat["escalation_required"] is True
+    assert repeat["escalation_level"] >= 1
+
+
+def test_repeat_of_still_open_complaint_does_not_bump_priority(pipeline):
+    """A same-day duplicate of a complaint that's still open (not yet Resolved/Closed)
+    is a different scenario -- an accidental double-submit, not a failed resolution --
+    and must not get the priority bump."""
+    text = "I was charged twice for booking TNV-12345, please refund the duplicate charge."
+    baseline = pipeline.process(text, metadata={"submitted_at": datetime(2026, 1, 5, 9, 0, tzinfo=timezone.utc)})
+
+    repeat = pipeline.process(
+        text,
+        metadata={
+            "submitted_at": datetime(2026, 1, 5, 9, 5, tzinfo=timezone.utc),
+            "recent_complaints": [
+                {
+                    "complaint_id": "CMP-00101",
+                    "description": text,
+                    "booking_reference": None,
+                    "status": "assigned",
+                }
+            ],
+        },
+    )
+
+    assert repeat["is_duplicate"] is True
+    assert repeat["priority"] == baseline["priority"]

@@ -12,6 +12,7 @@ STOPWORDS = {
 }
 
 SIMILARITY_THRESHOLD = 0.7
+RESOLVED_STATUSES = {"resolved", "closed"}
 
 
 @dataclass
@@ -19,6 +20,11 @@ class DuplicateResult:
     is_duplicate: bool = False
     duplicate_of: str | None = None
     similarity_score: float = 0.0
+    # True when the matched prior complaint was already Resolved/Closed -- i.e. this is a
+    # genuine repeat AFTER a resolution attempt, not just two same-day duplicate submissions
+    # (SRS Steps 21/54: "repeated complaint after failed resolution" is a tricky priority
+    # case that should escalate, unlike a same-day accidental double-submit).
+    repeat_after_resolution: bool = False
 
 
 def _significant_words(text: str) -> set[str]:
@@ -38,10 +44,11 @@ def check_duplicate(
     booking_reference: str | None,
     recent_complaints: list[dict],
 ) -> DuplicateResult:
-    """recent_complaints: [{complaint_id, description, booking_reference}, ...] for the
-    same customer within the last 7 days."""
+    """recent_complaints: [{complaint_id, description, booking_reference, status}, ...] for
+    the same customer within the last 7 days."""
     best_score = 0.0
     best_match = None
+    best_match_status = None
 
     for candidate in recent_complaints:
         score = _jaccard_similarity(description, candidate["description"])
@@ -53,10 +60,12 @@ def check_duplicate(
         if score > best_score:
             best_score = score
             best_match = candidate["complaint_id"]
+            best_match_status = candidate.get("status")
 
     is_duplicate = best_score >= SIMILARITY_THRESHOLD
     return DuplicateResult(
         is_duplicate=is_duplicate,
         duplicate_of=best_match if is_duplicate else None,
         similarity_score=round(best_score, 3),
+        repeat_after_resolution=is_duplicate and best_match_status in RESOLVED_STATUSES,
     )

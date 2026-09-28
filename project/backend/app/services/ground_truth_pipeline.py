@@ -36,20 +36,24 @@ class GroundTruthPipeline:
 
         escalation = check_escalation(self.escalation_rules, complaint_text, conditions, metadata)
 
-        priority, urgency = self._determine_priority_urgency(rule, conditions, escalation)
-
-        escalation_required = escalation.required or bool(rule and rule.get("escalation_required"))
-        escalation_level = max(escalation.level, (rule or {}).get("escalation_level", 0))
-
-        department = (rule or {}).get("department", FALLBACK_DEPARTMENT)
-
-        sla = calculate_sla(priority, metadata.get("loyalty_tier"), submitted_at)
-
         duplicate = check_duplicate(
             complaint_text,
             metadata.get("booking_reference"),
             metadata.get("recent_complaints", []),
         )
+
+        priority, urgency = self._determine_priority_urgency(rule, conditions, escalation, duplicate)
+
+        escalation_required = (
+            escalation.required or bool(rule and rule.get("escalation_required")) or duplicate.repeat_after_resolution
+        )
+        escalation_level = max(
+            escalation.level, (rule or {}).get("escalation_level", 0), 1 if duplicate.repeat_after_resolution else 0
+        )
+
+        department = (rule or {}).get("department", FALLBACK_DEPARTMENT)
+
+        sla = calculate_sla(priority, metadata.get("loyalty_tier"), submitted_at)
 
         return {
             "category": classification.category,
@@ -82,7 +86,7 @@ class GroundTruthPipeline:
         }
 
     @staticmethod
-    def _determine_priority_urgency(rule: dict | None, conditions, escalation) -> tuple[str, str]:
+    def _determine_priority_urgency(rule: dict | None, conditions, escalation, duplicate) -> tuple[str, str]:
         # Safety keywords and stranded travelers ALWAYS override to P0/Critical,
         # regardless of tone. This must never be based on sentiment/caps/exclamation.
         if conditions.has_safety_keywords or conditions.is_stranded:
@@ -92,6 +96,16 @@ class GroundTruthPipeline:
         base_urgency = rule["urgency"].lower() if rule else "low"
 
         if escalation.priority_override and PRIORITY_RANK[escalation.priority_override] < PRIORITY_RANK.get(base_priority, 3):
-            return escalation.priority_override, URGENCY_FOR_PRIORITY[escalation.priority_override]
+            base_priority, base_urgency = escalation.priority_override, URGENCY_FOR_PRIORITY[escalation.priority_override]
+
+        # A repeat of an already-Resolved/Closed complaint means the first resolution
+        # attempt failed -- bump one priority level (never based on tone/sentiment,
+        # only the objective fact that this exact issue was already "resolved" once
+        # and the customer is back). SRS Steps 21/54.
+        if duplicate.repeat_after_resolution:
+            bumped_rank = max(PRIORITY_RANK[base_priority] - 1, PRIORITY_RANK["P0"])
+            bumped_priority = next(p for p, rank in PRIORITY_RANK.items() if rank == bumped_rank)
+            if PRIORITY_RANK[bumped_priority] < PRIORITY_RANK[base_priority]:
+                return bumped_priority, URGENCY_FOR_PRIORITY[bumped_priority]
 
         return base_priority, base_urgency
