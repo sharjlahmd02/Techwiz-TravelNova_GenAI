@@ -243,10 +243,10 @@ async def process_inbox() -> None:
         return
 
     try:
-        uids = await asyncio.to_thread(imap.list_unseen_uids)
+        uids = await asyncio.to_thread(imap.list_candidate_uids)
         if not uids:
             return
-        logger.info("email intake: %d unread email(s)", len(uids))
+        logger.info("email intake: %d candidate email(s) in the recent window", len(uids))
 
         async with AsyncSessionLocal() as db:
             for uid in uids:

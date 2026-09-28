@@ -1,4 +1,4 @@
-"""Fetches unread emails from the official complaint inbox via IMAP
+"""Fetches recent emails from the official complaint inbox via IMAP
 (stdlib `imaplib` -- no OAuth/API-client dependency needed for a Gmail app
 password). One connection is held open for a whole poll cycle so marking an
 email read happens right after it's safely processed (email complaint flow
@@ -10,7 +10,7 @@ import imaplib
 import logging
 import re
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timedelta
 from email.header import decode_header
 from email.utils import parseaddr, parsedate_to_datetime
 
@@ -144,8 +144,18 @@ class ImapClient:
             except Exception:
                 pass
 
-    def list_unseen_uids(self) -> list[bytes]:
-        typ, data = self._conn.search(None, "UNSEEN")
+    def list_candidate_uids(self, since_days: int = 3) -> list[bytes]:
+        """Messages from the last `since_days` days, regardless of \\Seen --
+        NOT just UNSEEN. \\Seen is set by anything that reads the mailbox
+        (an admin checking the inbox in Gmail's own UI, a client fetching
+        RFC822 instead of BODY.PEEK[], etc.), so relying on it as the "not
+        yet processed" signal silently drops real complaints the moment
+        anyone looks at the inbox before the poller gets to them. Real
+        dedup is message_id-based (EmailIntakeLog), checked per-message in
+        the processor -- this search just bounds how much history gets
+        re-scanned each cycle, most of which short-circuits on that check."""
+        since_date = (datetime.now() - timedelta(days=since_days)).strftime("%d-%b-%Y")
+        typ, data = self._conn.search(None, "SINCE", since_date)
         if typ != "OK" or not data or not data[0]:
             return []
         return data[0].split()

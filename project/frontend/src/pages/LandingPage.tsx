@@ -75,13 +75,13 @@ function PillButton({
     "inline-flex items-center justify-center gap-1.5 rounded-full px-5 py-2.5 text-sm font-medium transition-all duration-200 ease-out active:scale-[0.98]";
   const variants: Record<string, string> = {
     primary:
-      "bg-black text-white shadow-[0_1px_2px_rgba(0,0,0,0.24)] hover:bg-zinc-800 hover:shadow-[0_8px_20px_-6px_rgba(0,0,0,0.10)] hover:-translate-y-0.5",
+      "bg-black text-white shadow-[0_1px_2px_rgba(0,0,0,0.24)] transition-all duration-200 ease-out hover:bg-zinc-800",
     outline:
-      "border border-zinc-300 text-black hover:border-zinc-400 hover:bg-zinc-50 hover:-translate-y-0.5",
+      "border border-zinc-300 text-black hover:border-zinc-400 transition-all duration-200 ease-out hover:bg-zinc-50",
     inverse:
-      "bg-white text-black shadow-[0_1px_2px_rgba(0,0,0,0.08)] hover:bg-zinc-100 hover:-translate-y-0.5",
+      "bg-white text-black shadow-[0_1px_2px_rgba(0,0,0,0.08)] transition-all duration-200 ease-out hover:bg-zinc-300",
     outlineInverse:
-      "border border-white/30 text-white hover:border-white hover:bg-white/5 hover:-translate-y-0.5",
+      "border border-white/30 text-white hover:border-white transition-all duration-200 ease-out hover:bg-white/5",
   };
   const classes = `${base} ${variants[variant]} ${className}`;
 
@@ -382,11 +382,47 @@ function WavyBackground({ className = "" }: { className?: string }) {
 
     // Grayscale ribbons -- tuned to the site's zinc/black palette
     const waves = [
-  { amp: 34, freq: 0.0032, speed: 0.018, phase: 0,   yBase: 0.42, width: 90,  color: "24,24,27",   alpha: 0.22 }, // near-black (zinc-900)
-  { amp: 46, freq: 0.0024, speed: 0.013, phase: 2.1, yBase: 0.55, width: 110, color: "180,140,60",  alpha: 0.16 }, // muted antique gold
-  { amp: 40, freq: 0.0028, speed: 0.021, phase: 4.3, yBase: 0.68, width: 100, color: "9,9,11",      alpha: 0.20 }, // deeper black (zinc-950)
-  { amp: 52, freq: 0.002,  speed: 0.009, phase: 1.4, yBase: 0.8,  width: 130, color: "212,175,120", alpha: 0.13 }, // soft champagne gold
-];
+      {
+        amp: 34,
+        freq: 0.0032,
+        speed: 0.018,
+        phase: 0,
+        yBase: 0.42,
+        width: 90,
+        color: "24,24,27",
+        alpha: 0.22,
+      }, // near-black (zinc-900)
+      {
+        amp: 46,
+        freq: 0.0024,
+        speed: 0.013,
+        phase: 2.1,
+        yBase: 0.55,
+        width: 110,
+        color: "180,140,60",
+        alpha: 0.16,
+      }, // muted antique gold
+      {
+        amp: 40,
+        freq: 0.0028,
+        speed: 0.021,
+        phase: 4.3,
+        yBase: 0.68,
+        width: 100,
+        color: "9,9,11",
+        alpha: 0.2,
+      }, // deeper black (zinc-950)
+      {
+        amp: 52,
+        freq: 0.002,
+        speed: 0.009,
+        phase: 1.4,
+        yBase: 0.8,
+        width: 130,
+        color: "212,175,120",
+        alpha: 0.13,
+      }, // soft champagne gold
+    ];
 
     const draw = () => {
       ctx.clearRect(0, 0, width, height);
@@ -464,6 +500,23 @@ export function LandingPage() {
     window.scrollTo({ top, behavior: "smooth" });
   };
 
+  // scroll-reveal for cards
+  useEffect(() => {
+    const els = document.querySelectorAll<HTMLElement>("[data-reveal]");
+    const io = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            (entry.target as HTMLElement).setAttribute("data-visible", "true");
+            io.unobserve(entry.target);
+          }
+        });
+      },
+      { threshold: 0.15, rootMargin: "0px 0px -60px 0px" },
+    );
+    els.forEach((el) => io.observe(el));
+    return () => io.disconnect();
+  }, []);
   return (
     <div
       id="top"
@@ -605,7 +658,10 @@ export function LandingPage() {
         {/* Bento grid */}
         <div className="relative z-10 mx-auto mt-20 grid max-w-5xl grid-cols-1 gap-5 md:grid-cols-3 md:grid-rows-2">
           {/* Card 1: New complaint mock form -- tall, spans both rows */}
-          <div className="rounded-2xl border border-zinc-200 bg-white p-7 shadow-[0_1px_2px_rgba(0,0,0,0.04)] transition-all duration-300 hover:-translate-y-1 hover:border-zinc-300 hover:shadow-[0_8px_20px_-6px_rgba(0,0,0,0.10)] md:col-span-1 md:row-span-2">
+          <div
+            data-reveal="0"
+            className="rounded-2xl border border-zinc-200 bg-white p-7 shadow-[0_1px_2px_rgba(0,0,0,0.04)] transition-all duration-300  hover:border-zinc-300  :col-span-1 md:row-span-2"
+          >
             <div className="mb-6 flex items-start justify-between">
               <div>
                 <p className="text-[11px] font-medium uppercase tracking-[0.1em] text-zinc-400">
@@ -659,7 +715,10 @@ export function LandingPage() {
           </div>
 
           {/* Card 2: 98% resolution rate */}
-          <div className="rounded-2xl border border-zinc-200 bg-white p-7 shadow-[0_1px_2px_rgba(0,0,0,0.04)] transition-all duration-300 hover:-translate-y-1 hover:border-zinc-300 hover:shadow-[0_8px_20px_-6px_rgba(0,0,0,0.10)] md:col-start-2 md:row-start-1">
+          <div
+            data-reveal="1"
+            className="rounded-2xl border border-zinc-200 bg-white p-7 shadow-[0_1px_2px_rgba(0,0,0,0.04)] transition-all duration-300  hover:border-zinc-300  md:col-start-2 md:row-start-1"
+          >
             <div className="mb-5 flex items-center justify-between">
               <p className="text-[11px] font-medium uppercase tracking-[0.1em] text-zinc-400">
                 This month
@@ -675,7 +734,10 @@ export function LandingPage() {
           </div>
 
           {/* Card 3: Dual pipeline -- dark card */}
-          <div className="rounded-2xl border border-zinc-800 bg-gradient-to-br from-zinc-900 to-black p-7 shadow-[0_1px_2px_rgba(0,0,0,0.3)] ring-1 ring-white/[0.04] transition-all duration-300 hover:-translate-y-1 hover:border-zinc-700 hover:shadow-[0_16px_40px_-16px_rgba(0,0,0,0.6)] md:col-start-3 md:row-start-1">
+          <div
+            data-reveal="2"
+            className="rounded-2xl border border-zinc-800 bg-gradient-to-br from-zinc-900 to-black p-7 shadow-[0_1px_2px_rgba(0,0,0,0.3)] ring-1 ring-white/[0.04] transition-all duration-300  hover:border-zinc-700 md:col-start-3 md:row-start-1"
+          >
             <p className="text-[11px] font-medium uppercase tracking-[0.1em] text-zinc-500">
               Process
             </p>
@@ -698,7 +760,10 @@ export function LandingPage() {
           </div>
 
           {/* Card 4: 2,400+ complaints resolved */}
-          <div className="rounded-2xl border border-zinc-200 bg-white p-7 shadow-[0_1px_2px_rgba(0,0,0,0.04)] transition-all duration-300 hover:-translate-y-1 hover:border-zinc-300 hover:shadow-[0_8px_20px_-6px_rgba(0,0,0,0.10)] md:col-start-2 md:row-start-2">
+          <div
+            data-reveal="3"
+            className="rounded-2xl border border-zinc-200 bg-white p-7 shadow-[0_1px_2px_rgba(0,0,0,0.04)] transition-all duration-300  hover:border-zinc-300  md:col-start-2 md:row-start-2"
+          >
             <p className="text-[11px] font-medium uppercase tracking-[0.1em] text-zinc-400">
               All time
             </p>
@@ -711,7 +776,10 @@ export function LandingPage() {
           </div>
 
           {/* Card 5: 24/7 support -- avatar group */}
-          <div className="rounded-2xl border border-zinc-200 bg-white p-7 shadow-[0_1px_2px_rgba(0,0,0,0.04)] transition-all duration-300 hover:-translate-y-1 hover:border-zinc-300 hover:shadow-[0_8px_20px_-6px_rgba(0,0,0,0.10)] md:col-start-3 md:row-start-2">
+          <div
+            data-reveal="4"
+            className="rounded-2xl border border-zinc-200 bg-white p-7 shadow-[0_1px_2px_rgba(0,0,0,0.04)] transition-all duration-300  hover:border-zinc-300  md:col-start-3 md:row-start-2"
+          >
             <p className="text-[11px] font-medium uppercase tracking-[0.1em] text-zinc-400">
               Always on
             </p>
@@ -756,9 +824,10 @@ export function LandingPage() {
               l1: "Policy documents",
               l2: "powering every resolution",
             },
-          ].map((stat) => (
+          ].map((stat, i) => (
             <div
               key={stat.value}
+              data-reveal={i}
               className="flex flex-col items-center py-8 text-center sm:py-0"
             >
               <p className="text-[56px] font-extralight leading-none tracking-tight text-black sm:text-[72px]">
@@ -790,10 +859,11 @@ export function LandingPage() {
 
           {/* Row 1: two large cards */}
           <div className="mt-14 grid grid-cols-1 gap-6 md:grid-cols-2">
-            {FEATURES_LARGE.map((feature) => (
+            {FEATURES_LARGE.map((feature, i) => (
               <div
                 key={feature.name}
-                className="flex min-h-72 flex-col rounded-2xl border border-zinc-200 bg-white p-7 transition-all duration-300 hover:-translate-y-1 hover:border-zinc-300"
+                data-reveal={i}
+                className="flex min-h-72 flex-col rounded-2xl border border-zinc-200 bg-white p-7 transition-all duration-300  hover:border-zinc-300"
               >
                 <span className="mb-5 flex h-10 w-10 items-center justify-center rounded-xl bg-zinc-100">
                   <feature.icon
@@ -814,7 +884,7 @@ export function LandingPage() {
 
           {/* Row 2: three small cards */}
           <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-3">
-            <div className="flex min-h-56 flex-col rounded-2xl border border-zinc-200 bg-white p-7 transition-all duration-300 hover:-translate-y-1 hover:border-zinc-300">
+            <div className="flex min-h-56 flex-col rounded-2xl border border-zinc-200 bg-white p-7 transition-all duration-300  hover:border-zinc-300">
               <span className="mb-5 flex h-10 w-10 items-center justify-center rounded-xl bg-zinc-100">
                 <Activity className="h-4.5 w-4.5 text-black" strokeWidth={2} />
               </span>
@@ -829,7 +899,7 @@ export function LandingPage() {
               </div>
             </div>
 
-            <div className="flex min-h-56 flex-col rounded-2xl border border-zinc-200 bg-white p-7 transition-all duration-300 hover:-translate-y-1 hover:border-zinc-300">
+            <div className="flex min-h-56 flex-col rounded-2xl border border-zinc-200 bg-white p-7 transition-all duration-300  hover:border-zinc-300">
               <span className="mb-5 flex h-10 w-10 items-center justify-center rounded-xl bg-zinc-100">
                 <Users className="h-4.5 w-4.5 text-black" strokeWidth={2} />
               </span>
@@ -858,7 +928,7 @@ export function LandingPage() {
               </div>
             </div>
 
-            <div className="flex min-h-56 flex-col rounded-2xl border border-zinc-200 bg-white p-7 transition-all duration-300 hover:-translate-y-1 hover:border-zinc-300">
+            <div className="flex min-h-56 flex-col rounded-2xl border border-zinc-200 bg-white p-7 transition-all duration-300  hover:border-zinc-300">
               <span className="mb-5 flex h-10 w-10 items-center justify-center rounded-xl bg-zinc-100">
                 <FileCheck className="h-4.5 w-4.5 text-black" strokeWidth={2} />
               </span>
@@ -898,9 +968,9 @@ export function LandingPage() {
           </div>
 
           <div className="mt-14 grid grid-cols-1 gap-6 md:grid-cols-3">
-            <div>
+            <div data-reveal="0">
               <p className="mb-2.5 text-[13px] text-zinc-400">Step 1</p>
-              <div className="flex h-full flex-col rounded-2xl border border-zinc-200 bg-white p-7 shadow-[0_1px_2px_rgba(0,0,0,0.04)] transition-all duration-300 hover:-translate-y-1 hover:border-zinc-300 ">
+              <div className="flex h-full flex-col rounded-2xl border border-zinc-200 bg-white p-7 shadow-[0_1px_2px_rgba(0,0,0,0.04)] transition-all duration-300  hover:border-zinc-300 ">
                 <span className="mb-5 flex h-10 w-10 items-center justify-center rounded-xl bg-zinc-100">
                   <FileText
                     className="h-4.5 w-4.5 text-black"
@@ -928,9 +998,9 @@ export function LandingPage() {
               </div>
             </div>
 
-            <div>
+            <div data-reveal="1">
               <p className="mb-2.5 text-[13px] text-zinc-400">Step 2</p>
-              <div className="flex h-full flex-col rounded-2xl border border-zinc-200 bg-white p-7 shadow-[0_1px_2px_rgba(0,0,0,0.04)] transition-all duration-300 hover:-translate-y-1 hover:border-zinc-300 ">
+              <div className="flex h-full flex-col rounded-2xl border border-zinc-200 bg-white p-7 shadow-[0_1px_2px_rgba(0,0,0,0.04)] transition-all duration-300  hover:border-zinc-300 ">
                 <span className="mb-5 flex h-10 w-10 items-center justify-center rounded-xl bg-zinc-100">
                   <Cog className="h-4.5 w-4.5 text-black" strokeWidth={2} />
                 </span>
@@ -948,9 +1018,9 @@ export function LandingPage() {
               </div>
             </div>
 
-            <div>
+            <div data-reveal="2">
               <p className="mb-2.5 text-[13px] text-zinc-400">Step 3</p>
-              <div className="flex h-full flex-col rounded-2xl border border-zinc-200 bg-white p-7 shadow-[0_1px_2px_rgba(0,0,0,0.04)] transition-all duration-300 hover:-translate-y-1 hover:border-zinc-300 ">
+              <div className="flex h-full flex-col rounded-2xl border border-zinc-200 bg-white p-7 shadow-[0_1px_2px_rgba(0,0,0,0.04)] transition-all duration-300  hover:border-zinc-300 ">
                 <span className="mb-5 flex h-10 w-10 items-center justify-center rounded-xl bg-zinc-100">
                   <CheckCircle2
                     className="h-4.5 w-4.5 text-black"
@@ -971,13 +1041,13 @@ export function LandingPage() {
         </div>
       </section>
 
-      {/* 6. Pricing */}
+      {/* 6. Banner */}
       <section
-        id="pricing"
+        id="banner"
         className="border-t border-zinc-200 bg-white px-6 py-28"
       >
-        <div className="mx-auto max-w-5xl">
-          <div className="mt-8 flex flex-col items-center justify-between gap-5 rounded-2xl bg-gradient-to-br from-zinc-900 to-black px-7 py-7 shadow-[0_20px_50px_-20px_rgba(0,0,0,0.45)] ring-1 ring-white/[0.04] sm:flex-row">
+        <div data-reveal="0" className="mx-auto max-w-5xl">
+          <div className="mt-8 flex flex-col items-center justify-between gap-5 rounded-2xl bg-gradient-to-br from-zinc-900 to-black px-7 py-7 ring-1 ring-white/[0.04] sm:flex-row">
             <div>
               <p className="text-[15px] font-semibold text-white">
                 Need a custom solution?
@@ -1010,6 +1080,7 @@ export function LandingPage() {
             {TESTIMONIALS.map((t, i) => (
               <div
                 key={t.name}
+                data-reveal={i}
                 className={`rounded-2xl border bg-white p-7 ${
                   activeTestimonial === i
                     ? "border-black"
