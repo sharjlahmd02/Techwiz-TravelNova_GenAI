@@ -99,3 +99,11 @@ class PreferredContactChannel(str, enum.Enum):
     EMAIL = "email"
     PHONE = "phone"
     SMS = "sms"
+
+
+class EmailIntakeOutcome(str, enum.Enum):
+    COMPLAINT_CREATED = "complaint_created"
+    ATTACHED_TO_EXISTING = "attached_to_existing"
+    UNCLASSIFIED = "unclassified"
+    MANUAL_REVIEW_UNVERIFIED_SENDER = "manual_review_unverified_sender"
+    MANUAL_REVIEW_UNREGISTERED_SENDER = "manual_review_unregistered_sender"

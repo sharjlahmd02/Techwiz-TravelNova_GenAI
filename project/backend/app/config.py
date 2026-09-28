@@ -16,6 +16,19 @@ class Settings(BaseSettings):
     CORS_ORIGINS: str = "http://localhost:5173"
     ENVIRONMENT: str = "development"
 
+    # Email complaint intake (doc/supportnova-email-complaint-flow.md) -- IMAP fetch +
+    # SMTP auto-reply against the official complaint inbox. Feature is a no-op (poller
+    # never starts) unless EMAIL_INTAKE_ENABLED is true and credentials are set.
+    EMAIL_INTAKE_ENABLED: bool = False
+    EMAIL_INTAKE_ADDRESS: str = ""
+    EMAIL_IMAP_HOST: str = "imap.gmail.com"
+    EMAIL_IMAP_PORT: int = 993
+    EMAIL_SMTP_HOST: str = "smtp.gmail.com"
+    EMAIL_SMTP_PORT: int = 587
+    EMAIL_USERNAME: str = ""
+    EMAIL_PASSWORD: str = ""
+    EMAIL_POLL_INTERVAL_MINUTES: int = 30
+
     @property
     def cors_origins_list(self) -> list[str]:
         return [origin.strip() for origin in self.CORS_ORIGINS.split(",") if origin.strip()]

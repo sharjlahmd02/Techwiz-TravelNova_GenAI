@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.auth import require_role
 from app.database import get_db
-from app.models.enums import UserRole
+from app.models.enums import EmailIntakeOutcome, UserRole
 from app.schemas.admin import (
     AdminAnalytics,
     AdminUserCreate,
@@ -18,6 +18,7 @@ from app.schemas.admin import (
     DepartmentCreate,
     DepartmentResponse,
     DepartmentUpdate,
+    EmailIntakeLogResponse,
     EscalationRuleCreate,
     EscalationRuleResponse,
     EscalationRuleUpdate,
@@ -209,6 +210,24 @@ async def audit_log(
 @router.get("/analytics", response_model=AdminAnalytics)
 async def analytics(db: AsyncSession = Depends(get_db), current_user=Depends(_require_admin)):
     return await AdminService(db).analytics()
+
+
+# ---- Email intake ----
+@router.get("/email-intake", response_model=list[EmailIntakeLogResponse])
+async def list_email_intake_logs(
+    outcome: EmailIntakeOutcome | None = None,
+    db: AsyncSession = Depends(get_db),
+    current_user=Depends(_require_admin),
+):
+    return await AdminService(db).list_email_intake_logs(outcome)
+
+
+@router.post("/email-intake/poll-now", status_code=status.HTTP_202_ACCEPTED)
+async def trigger_email_intake(
+    background_tasks: BackgroundTasks, db: AsyncSession = Depends(get_db), current_user=Depends(_require_admin)
+):
+    background_tasks.add_task(AdminService(db).trigger_email_intake_now)
+    return {"detail": "Email intake poll started"}
 
 
 # ---- Export ----

@@ -3,7 +3,7 @@ from datetime import date, datetime
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
-from app.models.enums import KnowledgeBaseStatus, LoyaltyTier, UserRole
+from app.models.enums import EmailIntakeOutcome, KnowledgeBaseStatus, LoyaltyTier, UserRole
 
 
 # ---- Resolution rules ----
@@ -235,6 +235,19 @@ class AdminAnalytics(BaseModel):
     category_trend: list[CategoryTrendPoint]
     escalation_trend: WeekOverWeek
     volume_trend: WeekOverWeek
+
+
+# ---- Email intake ----
+class EmailIntakeLogResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: uuid.UUID
+    from_address: str
+    subject: str
+    outcome: EmailIntakeOutcome
+    reason: str | None
+    complaint_id: uuid.UUID | None
+    received_at: datetime | None
+    processed_at: datetime
 
 
 # ---- Export / Import ----

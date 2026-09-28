@@ -3,6 +3,7 @@ from app.models.complaint import Complaint
 from app.models.complaint_history import ComplaintHistory
 from app.models.customer_message import CustomerMessage
 from app.models.department import Department
+from app.models.email_intake_log import EmailIntakeLog
 from app.models.escalation_rule import EscalationRule
 from app.models.knowledge_base import KnowledgeBaseDocument
 from app.models.knowledge_base_chunk import KnowledgeBaseChunk
@@ -18,6 +19,7 @@ __all__ = [
     "ComplaintHistory",
     "CustomerMessage",
     "Department",
+    "EmailIntakeLog",
     "EscalationRule",
     "KnowledgeBaseDocument",
     "KnowledgeBaseChunk",

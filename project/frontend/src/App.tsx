@@ -23,6 +23,7 @@ import { ManagerComplaintDetail } from './pages/manager/ManagerComplaintDetail'
 
 import { AdminDashboard } from './pages/admin/AdminDashboard'
 import { KnowledgeBasePage } from './pages/admin/KnowledgeBasePage'
+import { EmailIntakePage } from './pages/admin/EmailIntakePage'
 import { RulesEditorPage } from './pages/admin/RulesEditorPage'
 import { EscalationRulesPage } from './pages/admin/EscalationRulesPage'
 import { CategoriesPage } from './pages/admin/CategoriesPage'
@@ -142,6 +143,14 @@ function App() {
             element={
               <ProtectedRoute allowedRoles={['admin']}>
                 <KnowledgeBasePage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/email-intake"
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <EmailIntakePage />
               </ProtectedRoute>
             }
           />

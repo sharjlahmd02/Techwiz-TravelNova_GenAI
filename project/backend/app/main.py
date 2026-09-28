@@ -5,14 +5,18 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
 from app.routers import admin, agent, auth, complaints, manager, reviewer
+from app.services.email_intake.scheduler import start_email_intake_scheduler
 from app.services.sla_monitor import start_sla_scheduler
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     scheduler = start_sla_scheduler()
+    email_scheduler = start_email_intake_scheduler()
     yield
     scheduler.shutdown(wait=False)
+    if email_scheduler is not None:
+        email_scheduler.shutdown(wait=False)
 
 
 app = FastAPI(title="SupportNova API", version="1.0.0", lifespan=lifespan)

@@ -7,6 +7,7 @@ import {
   LayoutDashboard,
   ListChecks,
   LogOut,
+  Mail,
   Tags,
   TrendingUp,
   Users,
@@ -46,6 +47,7 @@ const NAV_BY_ROLE: Partial<Record<UserRole, NavSection[]>> = {
       label: 'Content',
       items: [
         { label: 'Knowledge Base', to: '/admin/knowledge-base', icon: BookOpen },
+        { label: 'Email Intake', to: '/admin/email-intake', icon: Mail },
         { label: 'Resolution Rules', to: '/admin/rules', icon: ListChecks },
         { label: 'Escalation Rules', to: '/admin/escalation-rules', icon: TrendingUp },
         { label: 'Categories', to: '/admin/categories', icon: Tags },

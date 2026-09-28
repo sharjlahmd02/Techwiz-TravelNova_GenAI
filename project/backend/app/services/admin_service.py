@@ -10,7 +10,16 @@ from app.models.category import Category, Subcategory
 from app.models.complaint import Complaint
 from app.models.complaint_history import ComplaintHistory
 from app.models.department import Department
-from app.models.enums import ComplaintChannel, ComplaintStatus, KnowledgeBaseStatus, LoyaltyTier, Priority, UserRole
+from app.models.email_intake_log import EmailIntakeLog
+from app.models.enums import (
+    ComplaintChannel,
+    ComplaintStatus,
+    EmailIntakeOutcome,
+    KnowledgeBaseStatus,
+    LoyaltyTier,
+    Priority,
+    UserRole,
+)
 from app.models.escalation_rule import EscalationRule
 from app.models.knowledge_base import KnowledgeBaseDocument
 from app.models.knowledge_base_chunk import KnowledgeBaseChunk
@@ -39,6 +48,7 @@ from app.schemas.admin import (
 )
 from app.services import pipeline_cache
 from app.services.complaint_service import process_complaint
+from app.services.email_intake.processor import process_inbox
 from app.services.genai.injection_detector import detect as detect_injection
 from app.utils.complaint_id import next_complaint_id
 
@@ -439,6 +449,16 @@ class AdminService:
             escalation_trend=escalation_trend,
             volume_trend=volume_trend,
         )
+
+    # ---- Email intake ----
+    async def list_email_intake_logs(self, outcome: EmailIntakeOutcome | None = None) -> list[EmailIntakeLog]:
+        stmt = select(EmailIntakeLog).order_by(EmailIntakeLog.processed_at.desc())
+        if outcome:
+            stmt = stmt.where(EmailIntakeLog.outcome == outcome)
+        return list((await self.db.scalars(stmt)).all())
+
+    async def trigger_email_intake_now(self) -> None:
+        await process_inbox()
 
     # ---- Bulk import (hidden evaluation dataset) ----
     async def import_complaints(

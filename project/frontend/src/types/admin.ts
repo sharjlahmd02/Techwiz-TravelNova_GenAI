@@ -1,5 +1,23 @@
 import type { UserRole } from './auth'
 
+export type EmailIntakeOutcome =
+  | 'complaint_created'
+  | 'attached_to_existing'
+  | 'unclassified'
+  | 'manual_review_unverified_sender'
+  | 'manual_review_unregistered_sender'
+
+export interface EmailIntakeLog {
+  id: string
+  from_address: string
+  subject: string
+  outcome: EmailIntakeOutcome
+  reason: string | null
+  complaint_id: string | null
+  received_at: string | null
+  processed_at: string
+}
+
 export interface ResolutionRule {
   id: string
   rule_id: string

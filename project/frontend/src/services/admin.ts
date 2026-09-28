@@ -1,7 +1,7 @@
 import { api } from './api'
 import type {
   ResolutionRule, EscalationRule, Category, Department, KnowledgeBaseDoc, AdminUser,
-  PaginatedAuditLog, AdminAnalytics,
+  PaginatedAuditLog, AdminAnalytics, EmailIntakeLog, EmailIntakeOutcome,
 } from '../types/admin'
 import type { UserRole } from '../types/auth'
 
@@ -59,6 +59,11 @@ export const adminApi = {
 
   // Analytics
   analytics: () => api.get<AdminAnalytics>('/api/admin/analytics'),
+
+  // Email intake
+  listEmailIntakeLogs: (outcome?: EmailIntakeOutcome) =>
+    api.get<EmailIntakeLog[]>('/api/admin/email-intake', { params: outcome ? { outcome } : {} }),
+  triggerEmailIntakeNow: () => api.post('/api/admin/email-intake/poll-now'),
 
   // Export
   export: (format: 'csv' | 'json' | 'pdf') =>
