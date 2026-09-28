@@ -22,6 +22,7 @@ function formatEntities(entities: EntitiesExtracted | null | undefined): string[
   if (entities.flight_numbers?.length) lines.push(`Flight #: ${entities.flight_numbers.join(', ')}`)
   if (entities.names?.length) lines.push(`Names: ${entities.names.join(', ')}`)
   if (entities.dates?.length) lines.push(`Dates: ${entities.dates.join(', ')}`)
+  if (entities.locations?.length) lines.push(`Locations: ${entities.locations.join(', ')}`)
   return lines
 }
 

@@ -7,7 +7,7 @@ departments); the user prompt is built fresh per complaint.
 # change in a way that could affect the model's output -- persisted per-analysis on
 # PipelineResult.prompt_version so a specific complaint's result can be traced back to
 # exactly which prompt version produced it (SRS req. liii).
-PROMPT_VERSION = "1.2"
+PROMPT_VERSION = "1.3"
 
 POLICY_APPLICABILITY_STATUSES = ["Applicable", "Conditionally Applicable", "Not Applicable", "Outdated"]
 
@@ -51,7 +51,10 @@ after) with exactly these fields:
     "monetary_amounts": [number],
     "flight_numbers": [string],
     "names": [string],
-    "dates": [string]
+    "dates": [string],
+    "locations": [string]        // departure/destination cities, airports, hotels, or other places
+                                  // named in the complaint, e.g. "Karachi", "Dubai International
+                                  // Airport", "Grand Hyatt Islamabad". Empty array if none mentioned.
   },
   "clarification_questions": [string]  // see MISSING INFORMATION RULE below. Empty array if
                                         // the complaint has everything needed to act on it.

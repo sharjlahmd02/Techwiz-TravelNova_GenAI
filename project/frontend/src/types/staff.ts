@@ -23,6 +23,7 @@ export interface EntitiesExtracted {
   flight_numbers?: string[]
   names?: string[]
   dates?: string[]
+  locations?: string[]
 }
 
 export type PolicyApplicabilityStatus = 'Applicable' | 'Conditionally Applicable' | 'Not Applicable' | 'Outdated'
