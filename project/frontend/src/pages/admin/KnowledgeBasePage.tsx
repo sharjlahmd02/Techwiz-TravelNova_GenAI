@@ -79,6 +79,24 @@ export function KnowledgeBasePage() {
     }
   }
 
+  const handleExpiryChange = async (doc: KnowledgeBaseDoc, value: string) => {
+    try {
+      await adminApi.updateKnowledgeBaseDoc(doc.id, { expiry_date: value || null })
+      show(value ? 'Expiry date set' : 'Expiry date cleared', 'success')
+      await load()
+    } catch {
+      show('Failed to update expiry date', 'error')
+    }
+  }
+
+  const expiryInfo = (doc: KnowledgeBaseDoc): { label: string; className: string } | null => {
+    if (!doc.expiry_date) return null
+    const daysLeft = Math.ceil((new Date(doc.expiry_date).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+    if (daysLeft < 0) return { label: 'Expired', className: 'text-[--status-red]' }
+    if (daysLeft <= 30) return { label: `Expires in ${daysLeft}d`, className: 'text-[--status-yellow]' }
+    return null
+  }
+
   return (
     <AppShell title="Knowledge Base" actions={<Button onClick={() => setModalOpen(true)}>Upload Policy</Button>}>
       <Table
@@ -88,6 +106,23 @@ export function KnowledgeBasePage() {
           { header: 'ID', accessor: (d) => <span className="font-mono text-xs">{d.document_id}</span> },
           { header: 'Title', accessor: (d) => d.title },
           { header: 'Version', accessor: (d) => d.version },
+          {
+            header: 'Expiry',
+            accessor: (d) => {
+              const info = expiryInfo(d)
+              return (
+                <div className="flex flex-col gap-0.5">
+                  <input
+                    type="date"
+                    value={d.expiry_date ?? ''}
+                    onChange={(e) => handleExpiryChange(d, e.target.value)}
+                    className="rounded-md border border-[--border] bg-transparent px-1.5 py-0.5 text-xs"
+                  />
+                  {info && <span className={`text-xs font-medium ${info.className}`}>{info.label}</span>}
+                </div>
+              )
+            },
+          },
           {
             header: 'Status',
             accessor: (d) => (

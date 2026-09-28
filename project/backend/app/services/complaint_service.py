@@ -6,7 +6,7 @@ task after the response has already been returned to the customer.
 import asyncio
 import re
 import uuid
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -146,7 +146,11 @@ async def select_relevant_policies(
     result = await db.execute(
         select(KnowledgeBaseDocument).where(KnowledgeBaseDocument.status == KnowledgeBaseStatus.ACTIVE)
     )
-    docs = result.scalars().all()
+    # Expired documents stay "Active" until an admin manually supersedes them (their
+    # status is a lifecycle field, expiry_date is just a date), but they shouldn't be
+    # newly recommended to GenAI once lapsed -- task.md 13.1.
+    today = date.today()
+    docs = [d for d in result.scalars().all() if d.expiry_date is None or d.expiry_date >= today]
 
     product_lower = product_type.lower()
     for doc in docs:

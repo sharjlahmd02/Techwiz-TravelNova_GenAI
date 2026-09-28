@@ -6,6 +6,7 @@ restart.
 """
 
 from dataclasses import dataclass
+from datetime import date
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -102,12 +103,23 @@ async def _load_escalation_rules(db: AsyncSession) -> list[dict]:
 
 
 async def _load_policy_ids(db: AsyncSession) -> dict[str, str]:
+    """Maps document_id -> its effective status string for citation validation.
+    An Active document whose expiry_date has passed is reported as "expired" (not
+    "active") so `response_validator._validate_policy_references` force-marks a
+    citation of it "Outdated" -- same objective-fact treatment as Previous/Superseded,
+    just driven by a date instead of the status enum (SRS Step 4 / task.md 13.1)."""
     result = await db.execute(
-        select(KnowledgeBaseDocument.document_id, KnowledgeBaseDocument.status).where(
-            KnowledgeBaseDocument.status != KnowledgeBaseStatus.DRAFT
-        )
+        select(
+            KnowledgeBaseDocument.document_id,
+            KnowledgeBaseDocument.status,
+            KnowledgeBaseDocument.expiry_date,
+        ).where(KnowledgeBaseDocument.status != KnowledgeBaseStatus.DRAFT)
     )
-    return {doc_id: status.value for doc_id, status in result.all()}
+    today = date.today()
+    return {
+        doc_id: ("expired" if expiry_date is not None and expiry_date < today else status.value)
+        for doc_id, status, expiry_date in result.all()
+    }
 
 
 async def get_pipelines(db: AsyncSession) -> PipelineBundle:

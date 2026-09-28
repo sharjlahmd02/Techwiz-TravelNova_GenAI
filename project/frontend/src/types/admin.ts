@@ -59,6 +59,7 @@ export interface KnowledgeBaseDoc {
   file_path: string
   version: string
   effective_date: string | null
+  expiry_date: string | null
   is_active: boolean
   status: KnowledgeBaseStatus
 }

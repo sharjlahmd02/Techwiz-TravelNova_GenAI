@@ -19,6 +19,7 @@ class KnowledgeBaseDocument(Base):
     file_path: Mapped[str] = mapped_column(String(500), nullable=False)
     version: Mapped[str] = mapped_column(String(20), default="1.0", nullable=False)
     effective_date: Mapped[date | None] = mapped_column(Date, nullable=True)
+    expiry_date: Mapped[date | None] = mapped_column(Date, nullable=True)
     # `status` is authoritative for policy-retrieval filtering (only ACTIVE docs feed
     # GenAI's context); `is_active` is kept as a simpler legacy flag for anything still
     # reading it and is kept in sync with status (True only when status == ACTIVE).

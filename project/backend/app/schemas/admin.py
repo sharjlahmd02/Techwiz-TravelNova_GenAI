@@ -174,6 +174,7 @@ class KnowledgeBaseDocResponse(BaseModel):
     file_path: str
     version: str
     effective_date: date | None
+    expiry_date: date | None
     is_active: bool
     status: KnowledgeBaseStatus
 
@@ -183,6 +184,8 @@ class KnowledgeBaseDocUpdate(BaseModel):
     category: str | None = None
     is_active: bool | None = None
     status: KnowledgeBaseStatus | None = None
+    effective_date: date | None = None
+    expiry_date: date | None = None
 
 
 # ---- Audit log ----
