@@ -34,6 +34,7 @@ class GenAIPipeline:
         metadata: dict[str, Any],
         policy_snippets: list[dict],
         valid_policy_ids: dict[str, str],
+        expected_required_actions: list[str] | None = None,
     ) -> dict[str, Any]:
         injection = detect_injection(complaint_text)
         base = {
@@ -61,7 +62,12 @@ class GenAIPipeline:
             }
 
         validation = validate_response(
-            result.data, complaint_text, self.categories, self.department_codes, valid_policy_ids
+            result.data,
+            complaint_text,
+            self.categories,
+            self.department_codes,
+            valid_policy_ids,
+            expected_required_actions,
         )
 
         return {

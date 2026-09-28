@@ -387,7 +387,11 @@ async def process_complaint(complaint_id: uuid.UUID) -> None:
             "loyalty_tier": loyalty_tier,
         }
         genai_result = await bundle.genai.process(
-            complaint.description, genai_metadata, policy_snippets, bundle.valid_policy_ids
+            complaint.description,
+            genai_metadata,
+            policy_snippets,
+            bundle.valid_policy_ids,
+            gt_result.get("required_actions"),
         )
         genai_result["policy_version"] = policy_version
 

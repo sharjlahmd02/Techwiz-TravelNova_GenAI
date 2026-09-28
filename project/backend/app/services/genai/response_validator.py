@@ -104,6 +104,7 @@ def validate_response(
     valid_categories: dict[str, list[str]],
     valid_department_codes: set[str],
     valid_policy_ids: dict[str, str],
+    expected_required_actions: list[str] | None = None,
 ) -> ValidationResult:
     issues: list[str] = []
     data: dict = {}
@@ -163,6 +164,17 @@ def validate_response(
 
     data["required_actions"] = _coerce_list_of_str(raw.get("required_actions"))
     data["prohibited_actions"] = _coerce_list_of_str(raw.get("prohibited_actions"))
+
+    # Completeness check (SRS Step 28): the ground-truth-matched rule's required_actions
+    # are the mandatory steps for this exact category/subcategory/condition -- flag any
+    # GenAI silently dropped. This is an addition check, not a rewrite of GenAI's list;
+    # it never removes or adds to required_actions itself, only surfaces the gap for a
+    # reviewer (see task.md 13.9 for where this shows up in the UI).
+    if expected_required_actions:
+        present_lower = {a.strip().lower() for a in data["required_actions"]}
+        for expected in expected_required_actions:
+            if expected.strip().lower() not in present_lower:
+                issues.append(f"missing_required_action:{expected!r}")
     data["refund_eligible"] = _coerce_bool(raw.get("refund_eligible"), False)
     data["compensation_eligible"] = _coerce_bool(raw.get("compensation_eligible"), False)
 

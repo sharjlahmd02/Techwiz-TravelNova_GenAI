@@ -186,3 +186,49 @@ def test_clarification_questions_are_capped():
         POLICIES,
     )
     assert len(result.data["clarification_questions"]) == 3
+
+
+def test_missing_required_action_is_flagged():
+    result = validate_response(
+        _valid_raw(required_actions=["Apologize"]),
+        "text",
+        CATEGORIES,
+        DEPARTMENTS,
+        POLICIES,
+        expected_required_actions=["Apologize", "Issue refund within 5 business days"],
+    )
+    assert any("missing_required_action" in i for i in result.issues)
+    assert "Issue refund within 5 business days" in result.issues[-1]
+    # GenAI's own required_actions list is left untouched -- this only flags, never rewrites.
+    assert result.data["required_actions"] == ["Apologize"]
+
+
+def test_required_action_check_is_case_insensitive():
+    result = validate_response(
+        _valid_raw(required_actions=["apologize to the customer"]),
+        "text",
+        CATEGORIES,
+        DEPARTMENTS,
+        POLICIES,
+        expected_required_actions=["Apologize To The Customer"],
+    )
+    assert not any("missing_required_action" in i for i in result.issues)
+
+
+def test_no_expected_actions_means_no_completeness_check():
+    result = validate_response(
+        _valid_raw(required_actions=[]), "text", CATEGORIES, DEPARTMENTS, POLICIES, expected_required_actions=[]
+    )
+    assert not any("missing_required_action" in i for i in result.issues)
+
+
+def test_all_required_actions_present_not_flagged():
+    result = validate_response(
+        _valid_raw(required_actions=["Apologize", "Issue refund within 5 business days"]),
+        "text",
+        CATEGORIES,
+        DEPARTMENTS,
+        POLICIES,
+        expected_required_actions=["Apologize", "Issue refund within 5 business days"],
+    )
+    assert not any("missing_required_action" in i for i in result.issues)
