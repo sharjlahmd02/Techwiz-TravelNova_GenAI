@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { AppShell } from '../../components/layout/AppShell'
 import { PriorityBadge, StatusBadge } from '../../components/ui/Badge'
 import { SLAIndicator } from '../../components/ui/SLAIndicator'
+import { FollowUpBadge } from '../../components/ui/FollowUpBadge'
 import { Input, Select } from '../../components/ui/Input'
 import { StatCard } from '../../components/ui/Card'
 import { Pagination } from '../../components/ui/Pagination'
@@ -117,6 +118,7 @@ export function AgentDashboard() {
           { header: 'Title', accessor: (c) => c.title, className: 'max-w-xs truncate' },
           { header: 'Status', accessor: (c) => <StatusBadge status={c.status} /> },
           { header: 'SLA', accessor: (c) => <SLAIndicator createdAt={c.created_at} deadline={c.sla_resolution_deadline} /> },
+          { header: 'Follow-up', accessor: (c) => <FollowUpBadge dueAt={c.next_follow_up_at} /> },
           { header: 'Received', accessor: (c) => new Date(c.created_at).toLocaleDateString() },
         ]}
       />

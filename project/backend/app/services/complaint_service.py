@@ -450,6 +450,9 @@ async def process_complaint(complaint_id: uuid.UUID) -> None:
             )
             complaint.supporting_department_id = supporting_dept.id if supporting_dept else None
 
+        # Ground-truth-only, same unconditional treatment (SRS Step 41 / task.md 13.6).
+        complaint.next_follow_up_at = gt_result.get("next_follow_up_at")
+
         if comparison.has_conflict:
             history_notes = "Pipeline processing complete -- conflict, routed to reviewer"
         elif additional_reason:

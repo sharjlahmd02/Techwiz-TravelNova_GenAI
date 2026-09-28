@@ -73,6 +73,7 @@ async def build_staff_detail(db: AsyncSession, complaint: Complaint) -> StaffCom
         review_reason=complaint.review_reason,
         sla_response_deadline=complaint.sla_response_deadline,
         sla_resolution_deadline=complaint.sla_resolution_deadline,
+        next_follow_up_at=complaint.next_follow_up_at,
         satisfaction_rating=complaint.satisfaction_rating,
         created_at=complaint.created_at,
         closed_at=complaint.closed_at,

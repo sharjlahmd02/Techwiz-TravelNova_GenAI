@@ -28,6 +28,7 @@ class StaffComplaintSummary(BaseModel):
     is_duplicate: bool
     sla_response_deadline: datetime | None
     sla_resolution_deadline: datetime | None
+    next_follow_up_at: datetime | None = None
     created_at: datetime
 
 
@@ -71,6 +72,7 @@ class StaffComplaintDetail(BaseModel):
     review_reason: str | None = None
     sla_response_deadline: datetime | None
     sla_resolution_deadline: datetime | None
+    next_follow_up_at: datetime | None = None
     satisfaction_rating: int | None
     created_at: datetime
     closed_at: datetime | None

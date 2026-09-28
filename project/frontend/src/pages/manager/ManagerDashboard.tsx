@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { AppShell } from '../../components/layout/AppShell'
 import { PriorityBadge, StatusBadge } from '../../components/ui/Badge'
+import { FollowUpBadge } from '../../components/ui/FollowUpBadge'
 import { StatCard } from '../../components/ui/Card'
 import { Input, Select } from '../../components/ui/Input'
 import { Pagination } from '../../components/ui/Pagination'
@@ -162,6 +163,7 @@ export function ManagerDashboard() {
           { header: 'Priority', accessor: (c) => <PriorityBadge priority={c.priority} /> },
           { header: 'Title', accessor: (c) => c.title, className: 'max-w-xs truncate' },
           { header: 'Status', accessor: (c) => <StatusBadge status={c.status} /> },
+          { header: 'Follow-up', accessor: (c) => <FollowUpBadge dueAt={c.next_follow_up_at} /> },
           { header: 'Received', accessor: (c) => new Date(c.created_at).toLocaleDateString() },
         ]}
       />

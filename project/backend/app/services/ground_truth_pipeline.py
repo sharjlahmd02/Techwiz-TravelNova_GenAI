@@ -3,7 +3,7 @@ Runs on every complaint alongside the GenAI pipeline; its output is
 authoritative when the two agree (see pipeline_comparator.py).
 """
 
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Any
 
 from app.services.ground_truth.condition_extractor import extract_conditions
@@ -55,6 +55,10 @@ class GroundTruthPipeline:
 
         sla = calculate_sla(priority, metadata.get("loyalty_tier"), submitted_at)
 
+        next_follow_up_at = None
+        if rule and rule.get("follow_up") and rule.get("follow_up_days"):
+            next_follow_up_at = submitted_at + timedelta(days=rule["follow_up_days"])
+
         return {
             "category": classification.category,
             "subcategory": classification.subcategory,
@@ -79,6 +83,7 @@ class GroundTruthPipeline:
             "duplicate_similarity_score": duplicate.similarity_score,
             "sla_response_deadline": sla.response_deadline,
             "sla_resolution_deadline": sla.resolution_deadline,
+            "next_follow_up_at": next_follow_up_at,
             "provider": "ground_truth",
             "model": "keyword_classifier+rule_matcher+escalation_checker",
             "prompt_version": None,

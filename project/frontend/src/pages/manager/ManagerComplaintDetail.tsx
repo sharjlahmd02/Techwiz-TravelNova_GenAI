@@ -4,6 +4,7 @@ import { AppShell } from '../../components/layout/AppShell'
 import { Button } from '../../components/ui/Button'
 import { PriorityBadge, StatusBadge } from '../../components/ui/Badge'
 import { Panel } from '../../components/ui/Card'
+import { FollowUpBadge } from '../../components/ui/FollowUpBadge'
 import { Input, Label, Select, Textarea } from '../../components/ui/Input'
 import { useToast } from '../../components/ui/Toast'
 import { EntitiesList, PolicyReferenceList, SentimentBadge } from '../../components/staff/PipelineIntelligence'
@@ -209,6 +210,12 @@ export function ManagerComplaintDetail() {
                 <dt className="text-[--text-muted]">Escalation Level</dt>
                 <dd className="text-[--text-primary]">{complaint.escalation_level}</dd>
               </div>
+              {complaint.next_follow_up_at && (
+                <div>
+                  <dt className="text-[--text-muted]">Follow-up</dt>
+                  <dd className="mt-0.5"><FollowUpBadge dueAt={complaint.next_follow_up_at} /></dd>
+                </div>
+              )}
             </dl>
           </Panel>
         </div>

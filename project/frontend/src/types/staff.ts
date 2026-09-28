@@ -14,6 +14,7 @@ export interface StaffComplaintSummary {
   is_duplicate: boolean
   sla_response_deadline: string | null
   sla_resolution_deadline: string | null
+  next_follow_up_at: string | null
   created_at: string
 }
 
@@ -104,6 +105,7 @@ export interface StaffComplaintDetail {
   review_reason: string | null
   sla_response_deadline: string | null
   sla_resolution_deadline: string | null
+  next_follow_up_at: string | null
   satisfaction_rating: number | null
   created_at: string
   closed_at: string | null

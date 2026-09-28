@@ -5,6 +5,7 @@ import { Button } from '../../components/ui/Button'
 import { PriorityBadge, StatusBadge } from '../../components/ui/Badge'
 import { Panel } from '../../components/ui/Card'
 import { Select, Textarea } from '../../components/ui/Input'
+import { FollowUpBadge } from '../../components/ui/FollowUpBadge'
 import { useToast } from '../../components/ui/Toast'
 import { EntitiesList, SentimentBadge } from '../../components/staff/PipelineIntelligence'
 import { agentApi } from '../../services/agent'
@@ -232,6 +233,12 @@ export function AgentComplaintDetail() {
                 <div>
                   <dt className="text-[--text-muted]">SLA Deadline</dt>
                   <dd className="text-[--text-primary]">{new Date(complaint.sla_resolution_deadline).toLocaleString()}</dd>
+                </div>
+              )}
+              {complaint.next_follow_up_at && (
+                <div>
+                  <dt className="text-[--text-muted]">Follow-up</dt>
+                  <dd className="mt-0.5"><FollowUpBadge dueAt={complaint.next_follow_up_at} /></dd>
                 </div>
               )}
             </dl>

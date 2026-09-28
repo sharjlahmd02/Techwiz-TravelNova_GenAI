@@ -75,6 +75,11 @@ class Complaint(Base):
     sla_response_met: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
     sla_resolution_met: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
 
+    # Set from the matched resolution rule's follow_up/follow_up_days (SRS Step 41) --
+    # ground-truth-only, same unconditional treatment as supporting_department_id. None if
+    # the matched rule doesn't require a follow-up.
+    next_follow_up_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
     satisfaction_rating: Mapped[int | None] = mapped_column(Integer, nullable=True)
     attachments: Mapped[list | None] = mapped_column(JSONB, nullable=True)
 

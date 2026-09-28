@@ -66,6 +66,27 @@ def test_caps_and_exclamations_never_influence_priority_directly(pipeline):
     assert calm_result["urgency"] == angry_result["urgency"]
 
 
+def test_follow_up_date_set_when_matched_rule_requires_it(pipeline):
+    """RULE-019 (Billing & Payments/Duplicate Charge) has follow_up=True, follow_up_days=3 --
+    confirmed against the real seeded rule data (task.md 13.6)."""
+    result = pipeline.process(
+        "I was charged twice for booking TNV-12345, please refund the duplicate charge.",
+        metadata={"submitted_at": datetime(2026, 1, 5, 9, 0, tzinfo=timezone.utc)},
+    )
+    assert result["matched_rule_ids"] == ["RULE-019"]
+    assert result["next_follow_up_at"] == datetime(2026, 1, 8, 9, 0, tzinfo=timezone.utc)
+
+
+def test_no_follow_up_date_when_rule_does_not_require_it(pipeline):
+    """RULE-006 (Flight Problems/Flight Delay 1-3 hours) has follow_up=False."""
+    result = pipeline.process(
+        "My flight was delayed 2 hours and nobody explained why.",
+        metadata={"submitted_at": datetime(2026, 1, 5, 9, 0, tzinfo=timezone.utc)},
+    )
+    assert result["matched_rule_ids"] == ["RULE-006"]
+    assert result["next_follow_up_at"] is None
+
+
 def test_result_includes_sla_deadlines(pipeline):
     result = pipeline.process(
         "My booking confirmation shows the wrong destination city.",
