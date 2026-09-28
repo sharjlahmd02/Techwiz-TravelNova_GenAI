@@ -13,6 +13,8 @@ class Settings(BaseSettings):
     JWT_ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     JWT_REFRESH_TOKEN_EXPIRE_DAYS: int = 7
 
+    GOOGLE_CLIENT_ID: str = ""
+    
     CORS_ORIGINS: str = "http://localhost:5173"
     ENVIRONMENT: str = "development"
 

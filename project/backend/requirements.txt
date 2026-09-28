@@ -17,3 +17,5 @@ apscheduler
 pytest
 pytest-asyncio
 fpdf2
+google-auth
+requests

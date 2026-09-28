@@ -6,6 +6,8 @@ import { useAuthStore } from "../store/authStore";
 import { api } from "../services/api";
 import type { TokenResponse, User } from "../types/auth";
 
+import { GoogleAuthButton } from "../components/GoogleAuthButton";
+
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 interface FieldErrors {
@@ -525,6 +527,11 @@ export function RegisterPage() {
             <div className="h-px flex-1 bg-zinc-200" />
           </div>
 
+          {/* ADD THIS */}
+          <div className="mb-3">
+            <GoogleAuthButton onError={setServerError} />
+          </div>
+
           <p className="text-center text-sm text-zinc-500">
             Already have an account?{" "}
             <Link
@@ -536,10 +543,10 @@ export function RegisterPage() {
           </p>
 
           <p className="text-center text-sm text-zinc-500">
-                      <Link to="/" className="font-medium text-[#000] hover:underline">
-                        Back to Home
-                      </Link>
-                    </p>
+            <Link to="/" className="font-medium text-[#000] hover:underline">
+              Back to Home
+            </Link>
+          </p>
         </div>
 
         <p className="mt-3 text-center text-xs text-zinc-400">
