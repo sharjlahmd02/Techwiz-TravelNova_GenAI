@@ -5,9 +5,11 @@ from fastapi import HTTPException, status
 from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.models.category import Category
 from app.models.complaint import Complaint
-from app.models.enums import ComplaintStatus, HistoryAction, MessageSender, Priority
+from app.models.enums import ComplaintStatus, HistoryAction, MessageSender, PipelineType, Priority
 from app.models.customer_message import CustomerMessage
+from app.models.pipeline_result import PipelineResult
 from app.models.user import User
 from app.schemas.agent import AgentMetrics
 from app.services.staff_service import log_history
@@ -27,6 +29,9 @@ class AgentService:
         status_filter: ComplaintStatus | None = None,
         priority_filter: Priority | None = None,
         search: str | None = None,
+        category: str | None = None,
+        sentiment: str | None = None,
+        escalation_status: str | None = None,
     ) -> tuple[list[Complaint], int]:
         conditions = [Complaint.department_id == agent.department_id]
         if status_filter:
@@ -38,6 +43,20 @@ class AgentService:
             conditions.append(
                 or_(Complaint.title.ilike(like), Complaint.description.ilike(like), Complaint.complaint_id.ilike(like))
             )
+        if category:
+            conditions.append(Complaint.category_id.in_(select(Category.id).where(Category.name == category)))
+        if sentiment:
+            conditions.append(
+                Complaint.id.in_(
+                    select(PipelineResult.complaint_id).where(
+                        PipelineResult.pipeline == PipelineType.GENAI, PipelineResult.sentiment == sentiment
+                    )
+                )
+            )
+        if escalation_status == "escalated":
+            conditions.append(Complaint.escalation_level > 0)
+        elif escalation_status == "not_escalated":
+            conditions.append(Complaint.escalation_level == 0)
 
         base = select(Complaint).where(*conditions).order_by(Complaint.created_at.desc())
         total = len((await self.db.scalars(base)).all())

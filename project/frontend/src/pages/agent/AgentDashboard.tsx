@@ -11,10 +11,13 @@ import { Pagination } from '../../components/ui/Pagination'
 import { Table } from '../../components/ui/Table'
 import { useToast } from '../../components/ui/Toast'
 import { agentApi } from '../../services/agent'
+import { adminApi } from '../../services/admin'
 import type { StaffComplaintSummary } from '../../types/staff'
+import type { Category } from '../../types/admin'
 import type { ComplaintStatus, Priority } from '../../types/complaint'
 
 const PAGE_SIZE = 20
+const SENTIMENTS = ['Positive', 'Neutral', 'Negative', 'Very Negative']
 
 export function AgentDashboard() {
   const navigate = useNavigate()
@@ -24,10 +27,18 @@ export function AgentDashboard() {
   const [page, setPage] = useState(1)
   const [statusFilter, setStatusFilter] = useState<ComplaintStatus | ''>('')
   const [priorityFilter, setPriorityFilter] = useState<Priority | ''>('')
+  const [categoryFilter, setCategoryFilter] = useState('')
+  const [sentimentFilter, setSentimentFilter] = useState('')
+  const [escalationFilter, setEscalationFilter] = useState<'' | 'escalated' | 'not_escalated'>('')
+  const [categories, setCategories] = useState<Category[]>([])
   const [searchInput, setSearchInput] = useState('')
   const [search, setSearch] = useState('')
   const [metrics, setMetrics] = useState<{ resolved_count: number; open_count: number } | null>(null)
   const prevOpenCount = useRef<number | null>(null)
+
+  useEffect(() => {
+    adminApi.listCategories().then(({ data }) => setCategories(data)).catch(() => setCategories([]))
+  }, [])
 
   useEffect(() => {
     const timeout = setTimeout(() => {
@@ -44,6 +55,9 @@ export function AgentDashboard() {
       status: statusFilter || undefined,
       priority: priorityFilter || undefined,
       search: search || undefined,
+      category: categoryFilter || undefined,
+      sentiment: sentimentFilter || undefined,
+      escalation_status: escalationFilter || undefined,
     })
     setComplaints(data.items)
     setTotal(data.total)
@@ -60,7 +74,7 @@ export function AgentDashboard() {
     const interval = setInterval(load, 10_000)
     return () => clearInterval(interval)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, statusFilter, priorityFilter, search])
+  }, [page, statusFilter, priorityFilter, categoryFilter, sentimentFilter, escalationFilter, search])
 
   return (
     <AppShell title="Complaints">
@@ -103,6 +117,44 @@ export function AgentDashboard() {
           <option value="P1">P1 High</option>
           <option value="P2">P2 Medium</option>
           <option value="P3">P3 Low</option>
+        </Select>
+        <Select
+          value={categoryFilter}
+          onChange={(e) => {
+            setPage(1)
+            setCategoryFilter(e.target.value)
+          }}
+          className="w-48"
+        >
+          <option value="">All categories</option>
+          {categories.map((c) => (
+            <option key={c.id} value={c.name}>{c.name}</option>
+          ))}
+        </Select>
+        <Select
+          value={sentimentFilter}
+          onChange={(e) => {
+            setPage(1)
+            setSentimentFilter(e.target.value)
+          }}
+          className="w-40"
+        >
+          <option value="">All sentiments</option>
+          {SENTIMENTS.map((s) => (
+            <option key={s} value={s}>{s}</option>
+          ))}
+        </Select>
+        <Select
+          value={escalationFilter}
+          onChange={(e) => {
+            setPage(1)
+            setEscalationFilter(e.target.value as '' | 'escalated' | 'not_escalated')
+          }}
+          className="w-44"
+        >
+          <option value="">Any escalation status</option>
+          <option value="escalated">Escalated</option>
+          <option value="not_escalated">Not escalated</option>
         </Select>
       </div>
 

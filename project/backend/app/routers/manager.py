@@ -30,12 +30,16 @@ async def list_complaints(
     status_filter: ComplaintStatus | None = Query(default=None, alias="status"),
     priority_filter: Priority | None = Query(default=None, alias="priority"),
     search: str | None = Query(default=None),
+    category: str | None = Query(default=None),
+    sentiment: str | None = Query(default=None),
+    escalation_status: str | None = Query(default=None, pattern="^(escalated|not_escalated)$"),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_role("manager", "admin")),
 ):
     service = ManagerService(db)
     items, total = await service.list_complaints(
-        page, page_size, department_id, status_filter, priority_filter, search
+        page, page_size, department_id, status_filter, priority_filter, search,
+        category, sentiment, escalation_status,
     )
     return PaginatedStaffComplaints(
         items=items, total=total, page=page, page_size=page_size, has_next=page * page_size < total

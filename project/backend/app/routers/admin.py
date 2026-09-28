@@ -93,8 +93,12 @@ async def delete_escalation_rule(rule_id: uuid.UUID, db: AsyncSession = Depends(
 
 
 # ---- Categories ----
+# Read access is shared with managers/agents (needed for the category filter on their
+# complaint lists, task.md 13.12); writes stay admin-only.
 @router.get("/categories", response_model=list[CategoryResponse])
-async def list_categories(db: AsyncSession = Depends(get_db), current_user=Depends(_require_admin)):
+async def list_categories(
+    db: AsyncSession = Depends(get_db), current_user=Depends(require_role("agent", "manager", "admin"))
+):
     return await AdminService(db).list_categories()
 
 

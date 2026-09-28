@@ -3,7 +3,16 @@ import type { StaffComplaintDetail, PaginatedStaffComplaints, AgentMetrics } fro
 import type { ComplaintStatus, Priority, CustomerMessage } from '../types/complaint'
 
 export const agentApi = {
-  list: (params?: { status?: ComplaintStatus; priority?: Priority; search?: string; page?: number; page_size?: number }) =>
+  list: (params?: {
+    status?: ComplaintStatus
+    priority?: Priority
+    search?: string
+    category?: string
+    sentiment?: string
+    escalation_status?: 'escalated' | 'not_escalated'
+    page?: number
+    page_size?: number
+  }) =>
     api.get<PaginatedStaffComplaints>('/api/agent/complaints', { params }),
 
   get: (id: string) => api.get<StaffComplaintDetail>(`/api/agent/complaints/${id}`),

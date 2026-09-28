@@ -9,11 +9,13 @@ import { Input, Select } from '../../components/ui/Input'
 import { Pagination } from '../../components/ui/Pagination'
 import { Table } from '../../components/ui/Table'
 import { managerApi } from '../../services/manager'
+import { adminApi } from '../../services/admin'
 import type { StaffComplaintSummary } from '../../types/staff'
-import type { ManagerAnalytics } from '../../types/admin'
+import type { Category, ManagerAnalytics } from '../../types/admin'
 import type { ComplaintStatus, Priority } from '../../types/complaint'
 
 const PAGE_SIZE = 20
+const SENTIMENTS = ['Positive', 'Neutral', 'Negative', 'Very Negative']
 
 export function ManagerDashboard() {
   const navigate = useNavigate()
@@ -22,9 +24,17 @@ export function ManagerDashboard() {
   const [page, setPage] = useState(1)
   const [statusFilter, setStatusFilter] = useState<ComplaintStatus | ''>('')
   const [priorityFilter, setPriorityFilter] = useState<Priority | ''>('')
+  const [categoryFilter, setCategoryFilter] = useState('')
+  const [sentimentFilter, setSentimentFilter] = useState('')
+  const [escalationFilter, setEscalationFilter] = useState<'' | 'escalated' | 'not_escalated'>('')
+  const [categories, setCategories] = useState<Category[]>([])
   const [searchInput, setSearchInput] = useState('')
   const [search, setSearch] = useState('')
   const [analytics, setAnalytics] = useState<ManagerAnalytics | null>(null)
+
+  useEffect(() => {
+    adminApi.listCategories().then(({ data }) => setCategories(data)).catch(() => setCategories([]))
+  }, [])
 
   useEffect(() => {
     const timeout = setTimeout(() => {
@@ -43,6 +53,9 @@ export function ManagerDashboard() {
           status: statusFilter || undefined,
           priority: priorityFilter || undefined,
           search: search || undefined,
+          category: categoryFilter || undefined,
+          sentiment: sentimentFilter || undefined,
+          escalation_status: escalationFilter || undefined,
         }),
         managerApi.analytics(),
       ])
@@ -53,7 +66,7 @@ export function ManagerDashboard() {
     load()
     const interval = setInterval(load, 15_000)
     return () => clearInterval(interval)
-  }, [page, statusFilter, priorityFilter, search])
+  }, [page, statusFilter, priorityFilter, categoryFilter, sentimentFilter, escalationFilter, search])
 
   return (
     <AppShell title="Manager Dashboard">
@@ -149,6 +162,44 @@ export function ManagerDashboard() {
           <option value="P1">P1 High</option>
           <option value="P2">P2 Medium</option>
           <option value="P3">P3 Low</option>
+        </Select>
+        <Select
+          value={categoryFilter}
+          onChange={(e) => {
+            setPage(1)
+            setCategoryFilter(e.target.value)
+          }}
+          className="w-48"
+        >
+          <option value="">All categories</option>
+          {categories.map((c) => (
+            <option key={c.id} value={c.name}>{c.name}</option>
+          ))}
+        </Select>
+        <Select
+          value={sentimentFilter}
+          onChange={(e) => {
+            setPage(1)
+            setSentimentFilter(e.target.value)
+          }}
+          className="w-40"
+        >
+          <option value="">All sentiments</option>
+          {SENTIMENTS.map((s) => (
+            <option key={s} value={s}>{s}</option>
+          ))}
+        </Select>
+        <Select
+          value={escalationFilter}
+          onChange={(e) => {
+            setPage(1)
+            setEscalationFilter(e.target.value as '' | 'escalated' | 'not_escalated')
+          }}
+          className="w-44"
+        >
+          <option value="">Any escalation status</option>
+          <option value="escalated">Escalated</option>
+          <option value="not_escalated">Not escalated</option>
         </Select>
       </div>
 
