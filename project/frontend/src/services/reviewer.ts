@@ -1,5 +1,6 @@
 import { api } from './api'
 import type { StaffComplaintDetail, PaginatedStaffComplaints, PipelineComparisonSchema } from '../types/staff'
+import type { CustomerMessage } from '../types/complaint'
 
 export interface ConflictFieldDecision {
   field: string
@@ -31,6 +32,8 @@ export const reviewerApi = {
 
   regenerateResponse: (id: string, tone: ResponseTone = 'Professional') =>
     api.post<{ suggested_response: string }>(`/api/reviewer/conflicts/${id}/regenerate-response`, { tone }),
+  sendResponse: (id: string, message: string) =>
+  api.post<CustomerMessage>(`/api/reviewer/conflicts/${id}/send-response`, { message }),
 
   history: (page = 1, pageSize = 20) =>
     api.get<PipelineComparisonSchema[]>('/api/reviewer/history', { params: { page, page_size: pageSize } }),

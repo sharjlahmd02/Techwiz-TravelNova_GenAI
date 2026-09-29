@@ -19,6 +19,9 @@ from app.services.pipeline_comparator import COMPARED_FIELDS
 from app.services.staff_service import log_history
 from app.utils.datetime import utcnow
 
+from app.models.customer_message import CustomerMessage
+from app.models.enums import MessageSender
+
 _BOOL_FIELDS = {"escalation_required", "refund_eligible", "compensation_eligible"}
 _INT_FIELDS = {"escalation_level"}
 
@@ -209,3 +212,14 @@ class ReviewerService:
         )
         await self.db.commit()
         return new_response
+
+    async def send_response_to_customer(self, complaint: Complaint, reviewer: User, message: str) -> CustomerMessage:
+        msg = CustomerMessage(complaint_id=complaint.id, sender=MessageSender.AGENT, message=message)
+        self.db.add(msg)
+        await log_history(
+            self.db, complaint.id, HistoryAction.RESPONSE_SENT, reviewer.id,
+            notes="Reviewer sent the AI-drafted response to the customer",
+        )
+        await self.db.commit()
+        await self.db.refresh(msg)
+        return msg

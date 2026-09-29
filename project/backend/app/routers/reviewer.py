@@ -18,6 +18,7 @@ from app.schemas.staff import PaginatedStaffComplaints, StaffComplaintDetail, St
 from app.services.complaint_service import process_complaint
 from app.services.reviewer_service import ReviewerService
 from app.services.staff_service import build_staff_detail, get_complaint_or_404
+from app.schemas.message import CustomerMessageCreate, CustomerMessageResponse
 
 router = APIRouter(prefix="/api/reviewer", tags=["reviewer"])
 
@@ -103,6 +104,19 @@ async def regenerate_response(
     service = ReviewerService(db)
     new_response = await service.regenerate_response(complaint, current_user, data.tone)
     return RegeneratedResponseSchema(suggested_response=new_response)
+
+@router.post("/conflicts/{complaint_id}/send-response", response_model=CustomerMessageResponse, status_code=status.HTTP_201_CREATED)
+async def send_response(
+    complaint_id: uuid.UUID,
+    data: CustomerMessageCreate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_role("reviewer", "manager", "admin")),
+):
+    complaint = await get_complaint_or_404(db, complaint_id)
+    if complaint is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Complaint not found")
+    service = ReviewerService(db)
+    return await service.send_response_to_customer(complaint, current_user, data.message)
 
 
 @router.get("/history", response_model=list[PipelineComparisonSchema])

@@ -13,7 +13,7 @@ export function ProtectedRoute({ allowedRoles, children }: ProtectedRouteProps) 
   const { user, isAuthenticated } = useAuth()
 
   if (!isAuthenticated || !user) {
-    return <Navigate to="/" replace />
+    return <Navigate to="/login" replace />
   }
 
   if (!allowedRoles.includes(user.role)) {
